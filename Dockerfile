@@ -13,8 +13,8 @@ WORKDIR /go
 COPY --from=builder /build/indoquran /go/.
 COPY --from=builder  /build/src/config/yaml/. /go/src/config/yaml/
 ENV ENV=staging
-ENV PORT 8080
-EXPOSE 8080
+# ENV PORT 8080
+# EXPOSE 8080
 
 # executable
 ENTRYPOINT [ "./indoquran" ]
