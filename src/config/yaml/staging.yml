@@ -1,6 +1,6 @@
 # Server configurations
 server:
-  port: "8000"
+  port: "80"
 
 # Database credentials
 database:
