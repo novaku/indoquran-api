@@ -1,0 +1,8 @@
+# Server configurations
+server:
+  port: "8000"
+
+# Database credentials
+database:
+  uri: "mongodb+srv://nova:admin123@cluster0.df2xr.mongodb.net/indoquran?retryWrites=true&w=majority"
+  dbname: "indoquran"

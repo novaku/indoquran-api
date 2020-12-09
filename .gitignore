@@ -1,0 +1,7 @@
+go.sum
+.vscode/
+logs/
+docker/mariadb_data
+docker/mongodb_data
+docker/postgresql_data
+docker/redis_data

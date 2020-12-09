@@ -1,0 +1,8 @@
+# Server configurations
+server:
+  port: "8000"
+
+# Database credentials
+database:
+  uri: "mongodb://indoquran:indoquran@localhost:27017/indoquran"
+  dbname: "indoquran"
