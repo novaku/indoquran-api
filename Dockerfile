@@ -13,7 +13,7 @@ WORKDIR /go
 COPY --from=builder /build/indoquran /go/.
 COPY --from=builder  /build/src/config/yaml/. /go/src/config/yaml/
 ENV ENV=staging
-ENV PORT=8000
+ENV PORT=80
 
 # executable
 ENTRYPOINT [ "./indoquran" ]
