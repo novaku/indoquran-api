@@ -1,7 +1,8 @@
 package routes
 
 import (
-	"bitbucket.org/indoquran-api/src/config"
+	"os"
+
 	handle_quran "bitbucket.org/indoquran-api/src/handlers/quran"
 	handle_user "bitbucket.org/indoquran-api/src/handlers/user"
 	"github.com/gin-contrib/cors"
@@ -12,6 +13,7 @@ import (
 func StartGin() {
 	r := gin.Default()
 	r.Use(cors.Default())
+	port := os.Getenv("PORT")
 
 	api := r.Group("/api")
 	{
@@ -43,5 +45,5 @@ func StartGin() {
 		}
 	}
 
-	r.Run(":" + config.Config.Server.Port)
+	r.Run(":" + port)
 }
