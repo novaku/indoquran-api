@@ -4,3 +4,5 @@ build:
       dockerfile: Dockerfile
       target: builder
     web: Dockerfile
+run:
+  web: indoquran
