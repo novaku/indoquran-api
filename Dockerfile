@@ -1,4 +1,4 @@
-FROM golang:1.15-alpine AS builder
+FROM golang:alpine AS builder
 LABEL stage=builder
 RUN mkdir /build
 ADD . /build/
@@ -13,8 +13,8 @@ WORKDIR /go
 COPY --from=builder /build/indoquran /go/.
 COPY --from=builder  /build/src/config/yaml/. /go/src/config/yaml/
 ENV ENV=staging
-ENV PORT 5000
-EXPOSE 5000
+ENV PORT 8080
+EXPOSE 8080
 
 # executable
 ENTRYPOINT [ "./indoquran" ]
