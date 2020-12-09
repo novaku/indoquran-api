@@ -7,7 +7,7 @@ RUN CGO_ENABLED=0 GOOS=linux go build -a -o indoquran .
 
 
 # generate clean, final image for end users
-FROM alpine
+FROM alpine AS production
 RUN mkdir -p /go/src/config/yaml
 WORKDIR /go
 COPY --from=builder /build/indoquran /go/.
