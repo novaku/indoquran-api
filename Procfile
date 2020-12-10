@@ -1,1 +1,1 @@
-web: bin/indoquran
+web: indoquran-api
