@@ -15,8 +15,12 @@ var Config *Struct
 func init() {
 	logger.InitLogger()
 
-	env := "development"
-	env = os.Getenv("ENV")
+	env := os.Getenv("ENV")
+	if env == "" {
+		mlog.Warning("ENV variable is not set, set to default development")
+		env = "development"
+	}
+
 	configFile := fmt.Sprintf("src/config/yaml/%s.yml", env)
 
 	f, err := os.Open(configFile)
