@@ -4,6 +4,6 @@ server:
 
 # Database credentials
 database:
-  uri: "mongodb://indoquran:indoquran@45.77.42.16:27017/?serverSelectionTimeoutMS=5000&connectTimeoutMS=10000&authSource=indoquran&authMechanism=SCRAM-SHA-256"
+  uri: "mongodb://indoquran:indoquran@localhost:27017/?serverSelectionTimeoutMS=5000&connectTimeoutMS=10000&authSource=indoquran&authMechanism=SCRAM-SHA-256"
   # uri: "mongodb+srv://nova:admin123@cluster0.df2xr.mongodb.net/indoquran?retryWrites=true&w=majority"
   dbname: "indoquran"
