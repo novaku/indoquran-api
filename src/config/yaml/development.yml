@@ -6,3 +6,9 @@ server:
 database:
   uri: "mongodb://indoquran:indoquran@localhost:27017/indoquran"
   dbname: "indoquran"
+
+# Redis configurations
+cache:
+  uri: "redis://localhost:6379/0"
+  pass: ""
+  ttl: 12 # time to leave in hour value

@@ -16,7 +16,7 @@ func GetMongoDB() (*mongo.Database, error) {
 	clientOptions := options.Client().ApplyURI(mongoURI)
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
-		log.Fatal(err)
+		log.Panic(err)
 	}
 
 	return client.Database(mongoDB), nil

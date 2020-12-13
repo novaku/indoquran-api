@@ -3,24 +3,21 @@ package quran
 import (
 	"net/http"
 	"strconv"
+	"time"
 
+	"bitbucket.org/indoquran-api/src/config"
 	"bitbucket.org/indoquran-api/src/handlers"
 	"bitbucket.org/indoquran-api/src/helpers"
 	"bitbucket.org/indoquran-api/src/models/quran"
 	"bitbucket.org/indoquran-api/src/models/quran/format"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
+	"github.com/vmihailenco/msgpack"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func findSurat(c *gin.Context) {
-	rowsPerPage, _ := strconv.ParseInt(c.DefaultQuery("rowsperpage", ""), 10, 64)
-	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
-	sortBy := c.DefaultQuery("sortby", "nomor")
-	descending, _ := strconv.ParseBool(c.DefaultQuery("descending", "false"))
-	id, _ := strconv.Atoi(c.Param("id"))
-
+func findSurat(c *gin.Context, rowsPerPage, page int64, sortBy string, descending bool, id int) {
 	// for pagination
 	findoptions := options.Find()
 	if rowsPerPage != 0 {
@@ -67,37 +64,71 @@ func GetSurats(c *gin.Context) {
 		surats []format.Surat
 	)
 
-	findSurat(c)
+	rowsPerPage, _ := strconv.ParseInt(c.DefaultQuery("rowsperpage", ""), 10, 64)
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
+	sortBy := c.DefaultQuery("sortby", "nomor")
+	descending, _ := strconv.ParseBool(c.DefaultQuery("descending", "false"))
+	id, _ := strconv.Atoi(c.Param("id"))
+	result := format.Surats{}
+	redisKey := redisKeyGeneratorSurat(sortBy, rowsPerPage, page, descending, id)
 
-	defer cursor.Close(c)
+	mlog.Info("Search surat API, url : %+v", helpers.GetCurrentURL(c))
+	mlog.Info("redis key : %s", redisKey)
 
-	for cursor.Next(c) {
-		if err := cursor.Decode(&surat); err != nil {
+	val, err := cache.Get(c, redisKey).Result()
+	if err != nil || val == "" {
+		findSurat(c, rowsPerPage, page, sortBy, descending, id)
+
+		defer cursor.Close(c)
+
+		for cursor.Next(c) {
+			if err := cursor.Decode(&surat); err != nil {
+				mlog.Error(err)
+			}
+
+			result := format.Surat{
+				ID:         surat.ID,
+				Nomor:      surat.Nomor,
+				Nama:       surat.Nama,
+				Asma:       surat.Asma,
+				JumlahAyat: surat.JumlahAyat,
+				Arti:       surat.Arti,
+				Keterangan: surat.Keterangan,
+			}
+
+			surats = append(surats, result)
+		}
+
+		if err := cursor.Err(); err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Surat Data", err)
+			return
+		}
+
+		result.Surats = surats
+		result.Pagination = pagination
+
+		// redis set
+		b, err := msgpack.Marshal(&result)
+		if err != nil {
 			mlog.Error(err)
 		}
 
-		result := format.Surat{
-			ID:         surat.ID,
-			Nomor:      surat.Nomor,
-			Nama:       surat.Nama,
-			Asma:       surat.Asma,
-			JumlahAyat: surat.JumlahAyat,
-			Arti:       surat.Arti,
-			Keterangan: surat.Keterangan,
+		ttl := time.Duration(config.Config.Cache.TTL) * time.Hour
+
+		set, err := cache.SetNX(c, redisKey, string(b), ttl).Result()
+		if !set || err != nil {
+			mlog.Error(err)
 		}
-
-		surats = append(surats, result)
 	}
 
-	if err := cursor.Err(); err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Surat Data", err)
-		return
+	if val != "" {
+		err = msgpack.Unmarshal([]byte(val), &result)
+		if err != nil {
+			panic(err)
+		}
 	}
 
-	handlers.DefaultResponse(c, http.StatusOK, "Success Get Surat Data", &format.Surats{
-		Surats:     surats,
-		Pagination: pagination,
-	})
+	handlers.DefaultResponse(c, http.StatusOK, "Success Get Surat Data", result)
 	return
 }

@@ -6,13 +6,16 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
+	"bitbucket.org/indoquran-api/src/config"
 	"bitbucket.org/indoquran-api/src/handlers"
 	"bitbucket.org/indoquran-api/src/helpers"
 	"bitbucket.org/indoquran-api/src/models/quran"
 	"bitbucket.org/indoquran-api/src/models/quran/format"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
+	"github.com/vmihailenco/msgpack"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -24,15 +27,7 @@ var (
 	err        error
 )
 
-func findAyat(c *gin.Context) {
-	rowsPerPage, _ := strconv.ParseInt(c.DefaultQuery("rowsperpage", "5"), 10, 64)
-	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
-	sortBy := c.DefaultQuery("sortby", "nomor")
-	descending, _ := strconv.ParseBool(c.DefaultQuery("descending", "false"))
-	search := c.Param("searchText")
-	surat, _ := strconv.Atoi(c.DefaultQuery("surat", ""))
-	juz, _ := strconv.Atoi(c.DefaultQuery("juz", ""))
-
+func findAyat(c *gin.Context, search, sortBy string, surat, juz int, rowsPerPage, page int64, descending bool) {
 	// for pagination
 	findoptions := options.Find()
 	findoptions.SetLimit(rowsPerPage)
@@ -169,69 +164,106 @@ func createIndexAyat(c *gin.Context) {
 
 // GetSearchAyats : endpoint for get and search ayats
 func GetSearchAyats(c *gin.Context) {
+	rowsPerPage, _ := strconv.ParseInt(c.DefaultQuery("rowsperpage", "5"), 10, 64)
+	page, _ := strconv.ParseInt(c.DefaultQuery("page", "1"), 10, 64)
+	sortBy := c.DefaultQuery("sortby", "nomor")
+	descending, _ := strconv.ParseBool(c.DefaultQuery("descending", "false"))
+	search := c.Param("searchText")
+	surat, _ := strconv.Atoi(c.DefaultQuery("surat", ""))
+	juz, _ := strconv.Atoi(c.DefaultQuery("juz", ""))
+	result := format.Ayats{}
+	redisKey := redisKeyGeneratorAyat(search, sortBy, surat, juz, rowsPerPage, page, descending)
+
 	mlog.Info("Search ayat API, url : %+v", helpers.GetCurrentURL(c))
-	var ayat quran.Ayat
-	ayats := make([]format.Ayat, 0)
+	mlog.Info("redis key : %s", redisKey)
 
-	createIndexAyat(c)
-	findAyat(c)
+	val, err := cache.Get(c, redisKey).Result()
+	if err != nil || val == "" {
+		var ayat quran.Ayat
+		ayats := make([]format.Ayat, 0)
 
-	defer cursor.Close(c)
+		createIndexAyat(c)
+		findAyat(c, search, sortBy, surat, juz, rowsPerPage, page, descending)
 
-	for cursor.Next(c) {
-		if err := cursor.Decode(&ayat); err != nil {
+		defer cursor.Close(c)
+
+		for cursor.Next(c) {
+			if err := cursor.Decode(&ayat); err != nil {
+				mlog.Error(err)
+				handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Decode Result", err.Error())
+				return
+			}
+
+			catatans, err := getCatatans(c, ayat.Surat, ayat.Nomor)
+			if err != nil {
+				mlog.Error(err)
+				handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Catatan List", err.Error())
+				return
+			}
+
+			surat, err := getSurat(c, ayat.Surat)
+			if err != nil {
+				mlog.Error(err)
+				handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Surat Detail", err.Error())
+				return
+			}
+
+			suratPad := fmt.Sprintf("%0*d", 3, ayat.Surat)
+			ayatPad := fmt.Sprintf("%0*d", 3, ayat.Nomor)
+
+			result := format.Ayat{
+				ID:        ayat.ID,
+				Nomor:     ayat.Nomor,
+				Surat:     ayat.Surat,
+				SuratNama: surat.Nama,
+				QS:        fmt.Sprintf("[%d:%d]", ayat.Surat, ayat.Nomor),
+				Juz:       ayat.Juz,
+				TxtAR:     ayat.TxtAR,
+				TxtID:     ayat.TxtID,
+				TxtIDT:    ayat.TxtIDT,
+				TxtTafsir: ayat.TxtTafsir,
+				Image:     ayat.Image,
+				Audio:     fmt.Sprintf(audioURL, suratPad, ayatPad),
+				Catatan:   catatans,
+			}
+
+			ayats = append(ayats, result)
+		}
+		if err := cursor.Err(); err != nil {
 			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Decode Result", err.Error())
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get All Ayat", err.Error())
 			return
 		}
 
-		catatans, err := getCatatans(c, ayat.Surat, ayat.Nomor)
+		mlog.Info("Search ayat API, search query : %s", c.Param("searchText"))
+
+		// set the result
+		result.Ayats = ayats
+		result.Pagination = pagination
+
+		// redis set
+		b, err := msgpack.Marshal(&result)
 		if err != nil {
 			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Catatan List", err.Error())
-			return
 		}
 
-		surat, err := getSurat(c, ayat.Surat)
-		if err != nil {
+		ttl := time.Duration(config.Config.Cache.TTL) * time.Hour
+
+		set, err := cache.SetNX(c, redisKey, string(b), ttl).Result()
+		if !set || err != nil {
 			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Surat Detail", err.Error())
-			return
 		}
-
-		suratPad := fmt.Sprintf("%0*d", 3, ayat.Surat)
-		ayatPad := fmt.Sprintf("%0*d", 3, ayat.Nomor)
-
-		result := format.Ayat{
-			ID:        ayat.ID,
-			Nomor:     ayat.Nomor,
-			Surat:     ayat.Surat,
-			SuratNama: surat.Nama,
-			QS:        fmt.Sprintf("[%d:%d]", ayat.Surat, ayat.Nomor),
-			Juz:       ayat.Juz,
-			TxtAR:     ayat.TxtAR,
-			TxtID:     ayat.TxtID,
-			TxtIDT:    ayat.TxtIDT,
-			TxtTafsir: ayat.TxtTafsir,
-			Image:     ayat.Image,
-			Audio:     fmt.Sprintf(audioURL, suratPad, ayatPad),
-			Catatan:   catatans,
-		}
-
-		ayats = append(ayats, result)
-	}
-	if err := cursor.Err(); err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get All Ayat", err.Error())
-		return
 	}
 
-	mlog.Info("Search ayat API, search query : %s", c.Param("searchText"))
+	if val != "" {
+		err = msgpack.Unmarshal([]byte(val), &result)
+		if err != nil {
+			panic(err)
+		}
+	}
 
-	handlers.DefaultResponse(c, http.StatusOK, "Success Get All Ayat", &format.Ayats{
-		Ayats:      ayats,
-		Pagination: pagination,
-	})
+	handlers.DefaultResponse(c, http.StatusOK, "Success Get All Ayat", result)
+	return
 }
 
 // GetDetailAyat : function to get detail ayat
