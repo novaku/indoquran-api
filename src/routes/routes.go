@@ -30,6 +30,7 @@ func StartGin() {
 			quran.GET("/ayat", handle_quran.GetSearchAyats)
 			quran.GET("/ayat/:surat_ayat", handle_quran.GetDetailAyat)
 			quran.GET("/search/:searchText", handle_quran.GetSearchAyats)
+			quran.GET("/kata-bijak", handle_quran.GetKataBijak)
 
 			imp := quran.Group("/import")
 			{
@@ -39,8 +40,9 @@ func StartGin() {
 				// imp.GET("/tafsir", handle_quran.ImportTafsir)
 				// imp.GET("/juz", handle_quran.ImportJuz)
 				// imp.GET("/tafsir/move", handle_quran.ImportTafsirMove)
-				imp.GET("/image", handle_quran.ImportImage)
-				imp.GET("/arab-text", handle_quran.ImportArabText)
+				// imp.GET("/image", handle_quran.ImportImage)
+				// imp.GET("/arab-text", handle_quran.ImportArabText)
+				imp.GET("/wise-words", handle_quran.ImportWiseWords)
 			}
 		}
 	}

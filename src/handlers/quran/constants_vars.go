@@ -7,21 +7,23 @@ import (
 )
 
 const (
-	suratCollName   = "surat"
-	ayatCollName    = "ayat"
-	catatanCollName = "catatan"
-	tafsirCollName  = "tafsir"
-	imageURL        = "http://cdn.islamic.network/quran/images/%d_%d.png"
-	audioURL        = "https://audio.qurancdn.com/Alafasy/mp3/%s%s.mp3"
+	suratCollName     = "surat"
+	ayatCollName      = "ayat"
+	catatanCollName   = "catatan"
+	tafsirCollName    = "tafsir"
+	kataBijakCollName = "kata_bijak"
+	imageURL          = "http://cdn.islamic.network/quran/images/%d_%d.png"
+	audioURL          = "https://audio.qurancdn.com/Alafasy/mp3/%s%s.mp3"
 )
 
 var (
-	db                = *handlers.MongoConfig()
-	cache             = *handlers.RedisConfig()
-	suratCollection   = db.Collection(suratCollName)
-	ayatCollection    = db.Collection(ayatCollName)
-	catatanCollection = db.Collection(catatanCollName)
-	tafsirCollection  = db.Collection(tafsirCollName)
+	db                  = *handlers.MongoConfig()
+	cache               = *handlers.RedisConfig()
+	suratCollection     = db.Collection(suratCollName)
+	ayatCollection      = db.Collection(ayatCollName)
+	catatanCollection   = db.Collection(catatanCollName)
+	tafsirCollection    = db.Collection(tafsirCollName)
+	kataBijakCollection = db.Collection(kataBijakCollName)
 )
 
 func redisKeyGeneratorAyat(search, sortBy string, surat, juz int, rowsPerPage, page int64, descending bool) string {

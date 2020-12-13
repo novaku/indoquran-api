@@ -1,11 +1,13 @@
 package quran
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
 	"math"
 	"net/http"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -438,4 +440,31 @@ func ImportArabText(c *gin.Context) {
 	}
 
 	handlers.DefaultResponse(c, http.StatusOK, "Success update arab text from http", upd)
+}
+
+// ImportWiseWords : function to import wise words from local file
+func ImportWiseWords(c *gin.Context) {
+	file, err := os.Open("resources/wisewords.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		kata := &model_quran.KataBijak{
+			ID:   primitive.NewObjectID(),
+			Kata: scanner.Text(),
+		}
+
+		res, err := kataBijakCollection.InsertOne(c, kata)
+		if err != nil {
+			mlog.Error(err)
+		}
+		fmt.Println(res.InsertedID)
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
 }
