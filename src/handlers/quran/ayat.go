@@ -175,7 +175,6 @@ func GetSearchAyats(c *gin.Context) {
 	redisKey := redisKeyGeneratorAyat(search, sortBy, surat, juz, rowsPerPage, page, descending)
 
 	mlog.Info("Search ayat API, url : %+v", helpers.GetCurrentURL(c))
-	mlog.Info("redis key : %s", redisKey)
 
 	val, err := cache.Get(c, redisKey).Result()
 	if err != nil || val == "" {
@@ -249,6 +248,8 @@ func GetSearchAyats(c *gin.Context) {
 
 		ttl := time.Duration(config.Config.Cache.TTL) * time.Hour
 
+		mlog.Info("SET redis key : %s", redisKey)
+
 		set, err := cache.SetNX(c, redisKey, string(b), ttl).Result()
 		if !set || err != nil {
 			mlog.Error(err)
@@ -256,6 +257,8 @@ func GetSearchAyats(c *gin.Context) {
 	}
 
 	if val != "" {
+		mlog.Info("GET redis key : %s", redisKey)
+
 		err = msgpack.Unmarshal([]byte(val), &result)
 		if err != nil {
 			panic(err)
