@@ -5,5 +5,6 @@ import (
 )
 
 func main() {
+	// config initilized in file "src\config\config.go"
 	routes.StartGin()
 }
