@@ -12,7 +12,7 @@ RUN mkdir -p /go/src/config/yaml
 WORKDIR /go
 COPY --from=builder /build/indoquran /go/.
 COPY --from=builder  /build/src/config/yaml/. /go/src/config/yaml/
-ENV ENV=staging
+ENV ENV=development
 ENV PORT=8000
 
 # executable

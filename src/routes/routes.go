@@ -3,8 +3,10 @@ package routes
 import (
 	"os"
 
+	"bitbucket.org/indoquran-api/src/config"
 	handle_quran "bitbucket.org/indoquran-api/src/handlers/quran"
 	handle_user "bitbucket.org/indoquran-api/src/handlers/user"
+	"bitbucket.org/indoquran-api/src/middlewares"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
@@ -14,14 +16,28 @@ func StartGin() {
 	r := gin.Default()
 	r.Use(cors.Default())
 	port := os.Getenv("PORT")
+	if port == "80" || port == "" {
+		port = config.Config.Server.Port
+	}
+
+	// just for testing
+	r.GET("/test", handle_quran.TestGet)
 
 	api := r.Group("/api")
 	{
-		api.GET("/users", handle_user.GetAllUser)
-		api.POST("/users", handle_user.CreateUser)
-		api.GET("/users/:id", handle_user.GetUser)
-		api.PUT("/users/:id", handle_user.UpdateUser)
-		api.DELETE("/users/:id", handle_user.DeleteUser)
+		api.Use(middlewares.VisitorLogger)
+
+		usr := api.Group("/user")
+		{
+			usr.POST("/login", handle_user.LoginUser)
+			usr.GET("/:id", handle_user.GetUser)
+		}
+
+		// api.GET("/users", handle_user.GetAllUser)
+		// api.POST("/users", handle_user.CreateUser)
+		// api.GET("/users/:id", handle_user.GetUser)
+		// api.PUT("/users/:id", handle_user.UpdateUser)
+		// api.DELETE("/users/:id", handle_user.DeleteUser)
 
 		quran := api.Group("/quran")
 		{
@@ -42,7 +58,8 @@ func StartGin() {
 				// imp.GET("/tafsir/move", handle_quran.ImportTafsirMove)
 				// imp.GET("/image", handle_quran.ImportImage)
 				// imp.GET("/arab-text", handle_quran.ImportArabText)
-				imp.GET("/wise-words", handle_quran.ImportWiseWords)
+				// imp.GET("/wise-words", handle_quran.ImportWiseWords)
+				imp.GET("/ayat-id", handle_quran.AddAyatID)
 			}
 		}
 	}

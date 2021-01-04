@@ -1,4 +1,4 @@
-package model
+package user
 
 import (
 	"time"
@@ -8,12 +8,13 @@ import (
 
 //User : User structure
 type User struct {
-	ID        primitive.ObjectID `bson:"id"`
-	Name      string             `bson:"name"`
-	Address   string             `bson:"address"`
-	Age       int                `bson:"age"`
-	CreatedAt time.Time          `bson:"created_at"`
-	UpdatedAt time.Time          `bson:"updated_at"`
+	ID         primitive.ObjectID `bson:"_id" json:"id"`
+	Name       string             `bson:"name"`
+	Email      string             `bson:"email"`
+	FacebookID string             `bson:"facebook_id"`
+	Role       string             `bson:"role"`
+	CreatedAt  time.Time          `bson:"created_at"`
+	UpdatedAt  time.Time          `bson:"updated_at"`
 }
 
 //Users : list of users

@@ -9,6 +9,7 @@ import (
 // Ayat : struct of ayat
 type Ayat struct {
 	ID        primitive.ObjectID `bson:"_id" json:"id"`
+	AyatID    int                `bson:"ayat_id" json:"ayat_id"`
 	Nomor     int                `bson:"nomor" json:"nomor"`
 	Surat     int                `bson:"surat" json:"surat"`
 	Juz       int                `bson:"juz" json:"juz"`

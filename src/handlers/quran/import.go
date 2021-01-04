@@ -8,12 +8,11 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"reflect"
 	"strconv"
-	"strings"
 	"time"
 
 	"bitbucket.org/indoquran-api/src/handlers"
+	"bitbucket.org/indoquran-api/src/models/quran"
 	model_quran "bitbucket.org/indoquran-api/src/models/quran"
 	"bitbucket.org/indoquran-api/src/models/quran/alqurancloud"
 	"bitbucket.org/indoquran-api/src/models/quran/banghasan"
@@ -21,8 +20,10 @@ import (
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
+	"github.com/tidwall/gjson"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 // ImportSurat : function to import surat from outsource API
@@ -180,54 +181,44 @@ func ImportCatatan(c *gin.Context) {
 
 // ImportTafsir : function to import tafsir
 func ImportTafsir(c *gin.Context) {
-	tafsir := github.Tafsir114{}
-	surat := 114
+	var surat quran.Surat
+	var success []string
 
-	resp, err := http.Get("https://raw.githubusercontent.com/rioastamal/quran-json/master/surah/" + strconv.Itoa(surat) + ".json")
+	cursor, err := suratCollection.Find(c, bson.D{}, options.Find().SetSort(bson.D{{Key: "nomor", Value: 1}}))
 	if err != nil {
-		mlog.Error(err)
+		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed fetch database", err)
+		return
 	}
-
-	defer resp.Body.Close()
-
-	json.NewDecoder(resp.Body).Decode(&tafsir)
-
-	countAyat, err := strconv.Atoi(tafsir.Num114.NumberOfAyah)
-	if err != nil {
-		mlog.Error(err)
-	}
-
-	for i := 1; i <= countAyat; i++ {
-		tafsirText := field(tafsir, "tafsir.Num"+strconv.Itoa(surat)+".Tafsir.ID.Kemenag.Text.Num"+strconv.Itoa(i))
-		modelTafsir := model_quran.Tafsir{
-			ID:         primitive.NewObjectID(),
-			Surat:      surat,
-			Ayat:       i,
-			TextTafsir: tafsirText.String(),
-			CreatedAt:  time.Now(),
-			UpdatedAt:  time.Now(),
-		}
-		res, err := tafsirCollection.InsertOne(c, modelTafsir)
-		if err != nil {
+	defer cursor.Close(c)
+	for cursor.Next(c) {
+		if err := cursor.Decode(&surat); err != nil {
 			mlog.Error(err)
 		}
 
-		mlog.Info("Inserted, Tafsir Surat: %d, Ayat: %d, DB_ID: %+v", surat, i, res.InsertedID)
+		tafsirStruct := github.CreateStruct(fmt.Sprintf("%d", surat.Nomor), surat.JumlahAyat)
+		json, _ := json.Marshal(tafsirStruct)
+
+		for i := 1; i <= surat.JumlahAyat; i++ {
+			tafsirText := gjson.Get(string(json), fmt.Sprintf("%d", surat.Nomor)+".tafsir.id.kemenag.text."+fmt.Sprintf("%d", i))
+			modelTafsir := model_quran.Tafsir{
+				ID:         primitive.NewObjectID(),
+				Surat:      surat.Nomor,
+				Ayat:       i,
+				TextTafsir: tafsirText.String(),
+				CreatedAt:  time.Now(),
+				UpdatedAt:  time.Now(),
+			}
+			res, err := tafsirCollection.InsertOne(c, modelTafsir)
+			if err != nil {
+				mlog.Error(err)
+			}
+
+			mlog.Info("Inserted, Tafsir Surat: %d, Ayat: %d, DB_ID: %+v", surat.Nomor, i, res.InsertedID)
+		}
+		success = append(success, fmt.Sprintf("Surat: %s, id: %d, sukses!", surat.Nama, surat.Nomor))
 	}
 
-	// fmt.Println(field(tafsir, "tafsir.Num5.Tafsir.ID.Kemenag.Text.Num1"))
-
-	handlers.DefaultResponse(c, http.StatusOK, "Berhasil", tafsir)
-
-}
-
-func field(t interface{}, key string) reflect.Value {
-	strs := strings.Split(key, ".")
-	v := reflect.ValueOf(t)
-	for _, s := range strs[1:] {
-		v = v.FieldByName(s)
-	}
-	return v
+	handlers.DefaultResponse(c, http.StatusOK, "Berhasil", success)
 }
 
 // ImportJuz : import juz of ayat
@@ -467,4 +458,39 @@ func ImportWiseWords(c *gin.Context) {
 	if err := scanner.Err(); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// AddAyatID : add ID for every ayat
+func AddAyatID(c *gin.Context) {
+	var surat quran.Surat
+	var ayatID int = 1
+
+	cursor, err := suratCollection.Find(c, bson.D{}, options.Find().SetSort(bson.D{{Key: "nomor", Value: 1}}))
+	if err != nil {
+		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed fetch database", err)
+		return
+	}
+	defer cursor.Close(c)
+	for cursor.Next(c) {
+		if err := cursor.Decode(&surat); err != nil {
+			mlog.Error(err)
+		}
+
+		for i := 1; i <= surat.JumlahAyat; i++ {
+			filter := bson.M{
+				"$and": []bson.M{
+					{"surat": surat.Nomor},
+					{"nomor": i},
+				},
+			}
+			update := bson.M{"$set": bson.M{"ayat_id": ayatID}}
+			_, err = ayatCollection.UpdateOne(c, filter, update)
+			if err != nil {
+				mlog.Error(err)
+			}
+			mlog.Info("Update Surat: %d, Ayat: %s, ayat_id: %d", surat.Nomor, i, ayatID)
+			ayatID++
+		}
+	}
+	handlers.DefaultResponse(c, http.StatusOK, "Success update ayat_id", nil)
 }

@@ -1,0 +1,14 @@
+# Server configurations
+server:
+  port: "8000"
+
+# Database credentials
+database:
+  uri: "mongodb://indoquran:indoquran@mongodb:27017/indoquran"
+  dbname: "indoquran"
+
+# Redis configurations
+cache:
+  uri: "redis://redis:6379/0"
+  pass: ""
+  ttl: 12 # time to leave in hour value

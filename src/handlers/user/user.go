@@ -2,29 +2,34 @@ package user
 
 import (
 	"net/http"
-	"time"
 
 	"bitbucket.org/indoquran-api/src/handlers"
-	model_user "bitbucket.org/indoquran-api/src/models/user"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-// GetAllUser : Get All User Endpoint
-func GetAllUser(c *gin.Context) {
-	res, err := userCollection.Find(c, bson.M{})
+// LoginUser : Login user controller
+func LoginUser(c *gin.Context) {
+	form := formPost{}
 
-	if err != nil {
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get All User", err.Error())
+	if err := c.ShouldBind(&form); err != nil {
+		mlog.Error(err)
+		handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Body", err.Error())
 		return
 	}
 
-	handlers.DefaultResponse(c, http.StatusOK, "Success Get All User", &res)
+	id, err := findOrInsertDocument(c, &form)
+	if err != nil {
+		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed login user", err.Error())
+		return
+	}
+
+	handlers.DefaultResponse(c, http.StatusOK, "Succes Login User", id)
 }
 
-// GetUser : Get User Endpoint
+// GetUser : get one user controller
 func GetUser(c *gin.Context) {
 	id := c.Param("id")
 	idParse, errParse := primitive.ObjectIDFromHex(id)
@@ -33,77 +38,11 @@ func GetUser(c *gin.Context) {
 		return
 	}
 
-	res := userCollection.FindOne(c, bson.M{"id": &idParse})
+	res := userCollection.FindOne(c, bson.M{"_id": &idParse})
+	if res.Err() != nil {
+		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get One User", res.Err().Error())
+		return
+	}
 
 	handlers.DefaultResponse(c, http.StatusOK, "Success Get One User", &res)
-}
-
-// CreateUser : Create User Endpoint
-func CreateUser(c *gin.Context) {
-	user := model_user.User{}
-	err := c.Bind(&user)
-
-	if err != nil {
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Get Body", err.Error())
-		return
-	}
-
-	user.CreatedAt = time.Now()
-	user.UpdatedAt = time.Now()
-
-	res, err := userCollection.InsertOne(c, user)
-
-	if err != nil {
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Insert User", err.Error())
-		return
-	}
-
-	handlers.DefaultResponse(c, http.StatusOK, "Succes Insert User", &res)
-}
-
-// UpdateUser : Update User Endpoint
-func UpdateUser(c *gin.Context) {
-	id := c.Param("id")
-	idObject, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Parse Param", err.Error())
-		return
-	}
-
-	user := model_user.User{}
-	err = c.Bind(&user)
-
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Bind Param", err.Error())
-		return
-	}
-
-	user.UpdatedAt = time.Now()
-
-	res := userCollection.FindOneAndUpdate(c, bson.M{"_id": idObject}, user)
-
-	handlers.DefaultResponse(c, http.StatusOK, "Succes Update User", &res)
-}
-
-// DeleteUser : Delete User Endpoint
-func DeleteUser(c *gin.Context) {
-	id := c.Param("id")
-	idObject, err := primitive.ObjectIDFromHex(id)
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Parse Param", err.Error())
-		return
-	}
-
-	res, err := userCollection.DeleteOne(c, bson.M{"_id": idObject})
-
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Error Delete User", err.Error())
-		return
-	}
-
-	handlers.DefaultResponse(c, http.StatusOK, "Succes Delete User", &res)
 }
