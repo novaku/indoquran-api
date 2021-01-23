@@ -11,7 +11,13 @@ type Struct struct {
 	} `yaml:"database"`
 	Cache struct {
 		URI  string `yaml:"uri"`
+		Addr string `yaml:"addr"`
 		Pass string `yaml:"pass"`
 		TTL  int64  `yaml:"ttl"`
 	} `yaml:"cache"`
+	Session struct {
+		Name   string `yaml:"name"`
+		Secret string `yaml:"secret"`
+		UserID string `yaml:"user_id"`
+	} `yaml:"session"`
 }

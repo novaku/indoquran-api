@@ -61,3 +61,28 @@ func loginHistory(c *gin.Context, userID primitive.ObjectID) error {
 
 	return nil
 }
+
+func findByUserID(c *gin.Context, userID string) error {
+	user := model_user.User{}
+	id, err := primitive.ObjectIDFromHex(userID)
+	if err != nil {
+		return err
+	}
+	filter := bson.M{
+		"_id": bson.M{
+			"$eq": id,
+		},
+	}
+
+	userData := userCollection.FindOne(c, filter)
+	if userData.Err() != nil {
+		return userData.Err()
+	}
+
+	err = userData.Decode(&user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

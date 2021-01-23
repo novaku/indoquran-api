@@ -9,6 +9,7 @@ import (
 // Visitor : visitor structure
 type Visitor struct {
 	ID        primitive.ObjectID `bson:"_id" json:"id"`
+	UserID    string             `bson:"user_id"`
 	IP        string             `bson:"ip"`
 	Path      string             `bson:"path"`
 	URL       string             `bson:"url"`

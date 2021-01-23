@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/indoquran-api/src/helpers"
 	"bitbucket.org/indoquran-api/src/models/quran"
 	"bitbucket.org/indoquran-api/src/models/quran/format"
-	"bitbucket.org/indoquran-api/src/models/quran/github"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
 	"github.com/vmihailenco/msgpack"
@@ -135,11 +134,4 @@ func GetSurats(c *gin.Context) {
 
 	handlers.DefaultResponse(c, http.StatusOK, "Success Get Surat Data", result)
 	return
-}
-
-// TestGet : just for testing
-func TestGet(c *gin.Context) {
-	result := github.CreateStruct("1", 7)
-
-	handlers.DefaultResponse(c, http.StatusOK, "Success Get Surat Data", result)
 }

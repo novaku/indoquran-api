@@ -6,3 +6,16 @@ server:
 database:
   uri: "mongodb+srv://indoquran:indoquran@localhost:27017/indoquran"
   dbname: "indoquran"
+
+# Redis configurations
+cache:
+  uri: "redis://localhost:6379/0"
+  addr: "localhost:6379"
+  pass: ""
+  ttl: 12 # time to leave in hour value
+
+# Session configurations
+session:
+  name: "indoquranSession"
+  secret: "kSuo2RZIyz"
+  user_id: "indoquranUserID"

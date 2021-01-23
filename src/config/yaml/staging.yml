@@ -11,6 +11,12 @@ database:
 # Redis configurations
 cache:
   uri: "redis://localhost:6379/0"
-  # uri: "redis://:p1e1f401ec9697ad410d6ce62b4ef75a35232597382d084ed12f64a1176e6ed64@ec2-34-225-135-244.compute-1.amazonaws.com:12219"
+  addr: "localhost:6379"
   pass: ""
   ttl: 12 # time to leave in hour value
+
+# Session configurations
+session:
+  name: "indoquranSession"
+  secret: "2y73jVhbT9"
+  user_id: "indoquranUserID"

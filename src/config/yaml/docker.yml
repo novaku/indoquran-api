@@ -10,5 +10,12 @@ database:
 # Redis configurations
 cache:
   uri: "redis://redis:6379/0"
+  addr: "redis:6379"
   pass: ""
   ttl: 12 # time to leave in hour value
+
+# Session configurations
+session:
+  name: "indoquranSession"
+  secret: "XWYn86vz9m"
+  user_id: "indoquranUserID"
