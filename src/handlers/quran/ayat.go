@@ -21,12 +21,6 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-var (
-	pagination format.Pagination
-	cursor     *mongo.Cursor
-	err        error
-)
-
 func findAyat(c *gin.Context, search, sortBy string, surat, juz int, rowsPerPage, page int64, descending bool) {
 	// for pagination
 	findoptions := options.Find()

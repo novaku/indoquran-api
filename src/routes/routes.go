@@ -44,6 +44,7 @@ func StartGin() {
 			quran.GET("/ayat/:surat_ayat", handle_quran.GetDetailAyat)
 			quran.GET("/search/:searchText", handle_quran.GetSearchAyats)
 			quran.GET("/kata-bijak", handle_quran.GetKataBijak)
+			quran.GET("/topik/:id", handle_quran.GetTopik)
 		}
 	}
 
