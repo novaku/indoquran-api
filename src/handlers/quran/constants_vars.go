@@ -18,7 +18,7 @@ const (
 	imageURL          = "http://cdn.islamic.network/quran/images/%d_%d.png"
 	audioURL          = "https://audio.qurancdn.com/Alafasy/mp3/%s%s.mp3"
 	topikParentIcon   = "work_outline"
-	topikChildIcon    = "article"
+	topikChildIcon    = "content_copy"
 )
 
 var (
@@ -38,10 +38,14 @@ var (
 	topikCollection     = db.Collection(topikCollName)
 )
 
-func redisKeyGeneratorAyat(search, sortBy string, surat, juz int, rowsPerPage, page int64, descending bool) string {
-	return search + ":" + sortBy + ":" + fmt.Sprintf("%d", surat) + ":" + fmt.Sprintf("%d", juz) + ":" + fmt.Sprintf("%d", rowsPerPage) + ":" + fmt.Sprintf("%d", page) + ":" + fmt.Sprintf("%t", descending)
+func redisKeyGeneratorAyat(search, sortBy string, suratID, ayatID, juz int, rowsPerPage, page int64, descending bool) string {
+	return "ayat:" + search + ":" + sortBy + ":" + fmt.Sprintf("%d", suratID) + ":" + fmt.Sprintf("%d", ayatID) + ":" + fmt.Sprintf("%d", juz) + ":" + fmt.Sprintf("%d", rowsPerPage) + ":" + fmt.Sprintf("%d", page) + ":" + fmt.Sprintf("%t", descending)
 }
 
 func redisKeyGeneratorSurat(sortBy string, rowsPerPage, page int64, descending bool, id int) string {
-	return sortBy + ":" + fmt.Sprintf("%d", rowsPerPage) + ":" + fmt.Sprintf("%d", page) + ":" + fmt.Sprintf("%t", descending) + ":" + fmt.Sprintf("%d", id)
+	return "surat:" + sortBy + ":" + fmt.Sprintf("%d", rowsPerPage) + ":" + fmt.Sprintf("%d", page) + ":" + fmt.Sprintf("%t", descending) + ":" + fmt.Sprintf("%d", id)
+}
+
+func redisKeyGeneratorTopik(id string) string {
+	return "topik:" + id
 }

@@ -166,7 +166,7 @@ func GetSearchAyats(c *gin.Context) {
 	surat, _ := strconv.Atoi(c.DefaultQuery("surat", ""))
 	juz, _ := strconv.Atoi(c.DefaultQuery("juz", ""))
 	result := format.Ayats{}
-	redisKey := redisKeyGeneratorAyat(search, sortBy, surat, juz, rowsPerPage, page, descending)
+	redisKey := redisKeyGeneratorAyat(search, sortBy, surat, 0, juz, rowsPerPage, page, descending)
 
 	mlog.Info("Search ayat API, url : %+v", helpers.GetCurrentURL(c))
 
@@ -270,49 +270,84 @@ func GetDetailAyat(c *gin.Context) {
 	exp := strings.Split(detailID, ":")
 	suratID, _ := strconv.Atoi(exp[0])
 	ayatID, _ := strconv.Atoi(exp[1])
+	result := format.Ayat{}
 
-	findFilter := bson.M{
-		"$and": []bson.M{
-			{"surat": suratID},
-			{"nomor": ayatID},
-		},
+	redisKey := redisKeyGeneratorAyat("", "", suratID, ayatID, 0, 0, 0, false)
+
+	mlog.Info("Search ayat API, url : %+v", helpers.GetCurrentURL(c))
+
+	val, err := cache.Get(c, redisKey).Result()
+	if err != nil || val == "" {
+		findFilter := bson.M{
+			"$and": []bson.M{
+				{"surat": suratID},
+				{"nomor": ayatID},
+			},
+		}
+
+		if err = ayatCollection.FindOne(c, findFilter).Decode(&ayat); err != nil {
+			mlog.Error(err)
+		}
+
+		catatans, err := getCatatans(c, ayat.Surat, ayat.Nomor)
+		if err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Catatan List", err.Error())
+			return
+		}
+
+		surat, err := getSurat(c, ayat.Surat)
+		if err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Surat Detail", err.Error())
+			return
+		}
+
+		suratPad := fmt.Sprintf("%0*d", 3, ayat.Surat)
+		ayatPad := fmt.Sprintf("%0*d", 3, ayat.Nomor)
+
+		result = format.Ayat{
+			ID:        ayat.ID,
+			Nomor:     ayat.Nomor,
+			Surat:     ayat.Surat,
+			SuratNama: surat.Nama,
+			QS:        fmt.Sprintf("[%d:%d]", ayat.Surat, ayat.Nomor),
+			Juz:       ayat.Juz,
+			TxtAR:     ayat.TxtAR,
+			TxtID:     ayat.TxtID,
+			TxtIDT:    ayat.TxtIDT,
+			TxtTafsir: ayat.TxtTafsir,
+			Image:     ayat.Image,
+			Audio:     fmt.Sprintf(audioURL, suratPad, ayatPad),
+			Catatan:   catatans,
+		}
+
+		// redis set
+		b, err := msgpack.Marshal(&result)
+		if err != nil {
+			mlog.Error(err)
+		}
+
+		ttl := time.Duration(config.Config.Cache.TTL) * time.Hour
+
+		mlog.Info("SET redis key : %s", redisKey)
+
+		set, err := cache.SetNX(c, redisKey, string(b), ttl).Result()
+		if !set || err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed set redis", err.Error())
+			return
+		}
 	}
 
-	if err = ayatCollection.FindOne(c, findFilter).Decode(&ayat); err != nil {
-		mlog.Error(err)
-	}
+	if val != "" {
+		mlog.Info("GET redis key : %s", redisKey)
 
-	catatans, err := getCatatans(c, ayat.Surat, ayat.Nomor)
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Catatan List", err.Error())
-		return
-	}
-
-	surat, err := getSurat(c, ayat.Surat)
-	if err != nil {
-		mlog.Error(err)
-		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Surat Detail", err.Error())
-		return
-	}
-
-	suratPad := fmt.Sprintf("%0*d", 3, ayat.Surat)
-	ayatPad := fmt.Sprintf("%0*d", 3, ayat.Nomor)
-
-	result := format.Ayat{
-		ID:        ayat.ID,
-		Nomor:     ayat.Nomor,
-		Surat:     ayat.Surat,
-		SuratNama: surat.Nama,
-		QS:        fmt.Sprintf("[%d:%d]", ayat.Surat, ayat.Nomor),
-		Juz:       ayat.Juz,
-		TxtAR:     ayat.TxtAR,
-		TxtID:     ayat.TxtID,
-		TxtIDT:    ayat.TxtIDT,
-		TxtTafsir: ayat.TxtTafsir,
-		Image:     ayat.Image,
-		Audio:     fmt.Sprintf(audioURL, suratPad, ayatPad),
-		Catatan:   catatans,
+		err = msgpack.Unmarshal([]byte(val), &result)
+		if err != nil {
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed JSON encode", err.Error())
+			return
+		}
 	}
 
 	handlers.DefaultResponse(c, http.StatusOK, "Success Get One Ayat", result)
