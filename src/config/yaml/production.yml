@@ -4,7 +4,7 @@ server:
 
 # Database credentials
 database:
-  uri: "mongodb+srv://indoquran:indoquran@localhost:27017/indoquran"
+  uri: "mongodb://indoquran:indoquran@localhost:27017/indoquran"
   dbname: "indoquran"
 
 # Redis configurations
