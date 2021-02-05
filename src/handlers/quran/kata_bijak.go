@@ -23,7 +23,7 @@ func GetKataBijak(c *gin.Context) {
 	}
 	defer cur.Close(c)
 
-	if err := cursor.Err(); err != nil {
+	if err := cur.Err(); err != nil {
 		mlog.Error(err)
 		handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get Kata Bijak", err)
 		return
