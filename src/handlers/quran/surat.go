@@ -80,6 +80,12 @@ func GetSurats(c *gin.Context) {
 
 		defer cursor.Close(c)
 
+		if err := cursor.Err(); err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Surat Data", err)
+			return
+		}
+
 		for cursor.Next(c) {
 			if err := cursor.Decode(&surat); err != nil {
 				mlog.Error(err)
@@ -96,12 +102,6 @@ func GetSurats(c *gin.Context) {
 			}
 
 			surats = append(surats, result)
-		}
-
-		if err := cursor.Err(); err != nil {
-			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Surat Data", err)
-			return
 		}
 
 		result.Surats = surats

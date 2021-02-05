@@ -44,6 +44,12 @@ func GetTopik(c *gin.Context) {
 
 		defer cursor.Close(c)
 
+		if err := cursor.Err(); err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Topik Data", err)
+			return
+		}
+
 		for cursor.Next(c) {
 			if err = cursor.Decode(&topik); err != nil {
 				mlog.Error(err)
@@ -65,12 +71,6 @@ func GetTopik(c *gin.Context) {
 			}
 
 			trees = append(trees, tree)
-		}
-
-		if err := cursor.Err(); err != nil {
-			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusBadRequest, "Error Get Topik Data", err)
-			return
 		}
 
 		// redis set

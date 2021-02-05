@@ -122,6 +122,11 @@ func getCatatans(c *gin.Context, surat, ayat int) ([]format.Catatan, error) {
 
 	defer cursor.Close(c)
 
+	if err := cursor.Err(); err != nil {
+		mlog.Error(err)
+		return nil, err
+	}
+
 	for cursor.Next(c) {
 		if err := cursor.Decode(&catatan); err != nil {
 			mlog.Error(err)
@@ -180,6 +185,12 @@ func GetSearchAyats(c *gin.Context) {
 
 		defer cursor.Close(c)
 
+		if err := cursor.Err(); err != nil {
+			mlog.Error(err)
+			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get All Ayat", err.Error())
+			return
+		}
+
 		for cursor.Next(c) {
 			if err := cursor.Decode(&ayat); err != nil {
 				mlog.Error(err)
@@ -221,11 +232,6 @@ func GetSearchAyats(c *gin.Context) {
 			}
 
 			ayats = append(ayats, result)
-		}
-		if err := cursor.Err(); err != nil {
-			mlog.Error(err)
-			handlers.DefaultResponse(c, http.StatusInternalServerError, "Failed Get All Ayat", err.Error())
-			return
 		}
 
 		mlog.Info("Search ayat API, search query : %s", c.Param("searchText"))
