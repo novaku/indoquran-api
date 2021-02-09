@@ -47,5 +47,14 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 		}
 	}
 
+	if val != "" {
+		mlog.Info("GET redis key : %s", redisKeyIPToCountry+ip)
+
+		err = msgpack.Unmarshal([]byte(val), &ipData)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	return &ipData, nil
 }
