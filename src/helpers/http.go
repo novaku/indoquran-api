@@ -1,6 +1,7 @@
 package helpers
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -31,7 +32,11 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 
 		defer response.Body.Close()
 
-		msgpack.NewDecoder(response.Body).Decode(&ipData)
+		err = json.NewDecoder(response.Body).Decode(&ipData)
+		if err != nil {
+			mlog.Error(err)
+			return nil, err
+		}
 
 		b, err := msgpack.Marshal(&ipData)
 		if err != nil {
