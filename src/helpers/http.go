@@ -1,8 +1,12 @@
 package helpers
 
 import (
+	"bufio"
 	"encoding/json"
+	"log"
+	"math/rand"
 	"net/http"
+	"os"
 	"time"
 
 	"bitbucket.org/indoquran-api/src/config"
@@ -20,13 +24,22 @@ var cache = *handlers.RedisConfig()
 
 // IPToCountry : IP to country data
 func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
+	client := &http.Client{}
 	ipData := models.IPToCountryStruct{}
+
 	val, err := cache.Get(c, redisKeyIPToCountry+ip).Result()
 	if err != nil || val == "" {
-		response, err := http.Get("https://demo.ip-api.com/json/" + ip)
+		request, err := http.NewRequest("GET", "https://api.ipgeolocation.io/ipgeo?apiKey="+config.Config.Secret.Geolication+"&ip="+ip, nil)
 		if err != nil {
 			mlog.Error(err)
 			return nil, err
+		}
+
+		request.Header.Set("User-Agent", randomUserAgents())
+
+		response, err := client.Do(request)
+		if err != nil {
+			mlog.Error(err)
 		}
 
 		defer response.Body.Close()
@@ -63,4 +76,29 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 	}
 
 	return &ipData, nil
+}
+
+func randomUserAgents() string {
+	f, err := os.Open("resources/user-agents.txt")
+	agentCount := 0
+	agents := []string{}
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer f.Close()
+
+	scanner := bufio.NewScanner(f)
+
+	for scanner.Scan() {
+		agents = append(agents, scanner.Text())
+		agentCount++
+	}
+
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
+	return agents[rand.Intn(len(agents)-1)]
 }

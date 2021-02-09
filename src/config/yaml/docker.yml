@@ -19,3 +19,6 @@ session:
   name: "indoquranSession"
   secret: "XWYn86vz9m"
   user_id: "indoquranUserID"
+
+secrets:
+  geolication: "d6570d658eff4d299890b61907969c3f"

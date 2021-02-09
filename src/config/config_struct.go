@@ -20,4 +20,7 @@ type Struct struct {
 		Secret string `yaml:"secret"`
 		UserID string `yaml:"user_id"`
 	} `yaml:"session"`
+	Secret struct {
+		Geolication string `yaml:"geolication"`
+	} `yaml:"secrets"`
 }

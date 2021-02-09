@@ -22,18 +22,39 @@ type Visitor struct {
 
 // IPToCountryStruct : structure for ip to country data
 type IPToCountryStruct struct {
-	Status      string  `json:"status"`
-	Country     string  `json:"country"`
-	CountryCode string  `json:"countryCode"`
-	Region      string  `json:"region"`
-	RegionName  string  `json:"regionName"`
-	City        string  `json:"city"`
-	Zip         string  `json:"zip"`
-	Lat         float64 `json:"lat"`
-	Lon         float64 `json:"lon"`
-	Timezone    string  `json:"timezone"`
-	Isp         string  `json:"isp"`
-	Org         string  `json:"org"`
-	As          string  `json:"as"`
-	Query       string  `json:"query"`
+	IP             string `json:"ip"`
+	ContinentCode  string `json:"continent_code"`
+	ContinentName  string `json:"continent_name"`
+	CountryCode2   string `json:"country_code2"`
+	CountryCode3   string `json:"country_code3"`
+	CountryName    string `json:"country_name"`
+	CountryCapital string `json:"country_capital"`
+	StateProv      string `json:"state_prov"`
+	District       string `json:"district"`
+	City           string `json:"city"`
+	Zipcode        string `json:"zipcode"`
+	Latitude       string `json:"latitude"`
+	Longitude      string `json:"longitude"`
+	IsEu           bool   `json:"is_eu"`
+	CallingCode    string `json:"calling_code"`
+	CountryTld     string `json:"country_tld"`
+	Languages      string `json:"languages"`
+	CountryFlag    string `json:"country_flag"`
+	GeonameID      string `json:"geoname_id"`
+	Isp            string `json:"isp"`
+	ConnectionType string `json:"connection_type"`
+	Organization   string `json:"organization"`
+	Currency       struct {
+		Code   string `json:"code"`
+		Name   string `json:"name"`
+		Symbol string `json:"symbol"`
+	} `json:"currency"`
+	TimeZone struct {
+		Name            string  `json:"name"`
+		Offset          int     `json:"offset"`
+		CurrentTime     string  `json:"current_time"`
+		CurrentTimeUnix float64 `json:"current_time_unix"`
+		IsDst           bool    `json:"is_dst"`
+		DstSavings      int     `json:"dst_savings"`
+	} `json:"time_zone"`
 }
