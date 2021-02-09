@@ -6,9 +6,11 @@ import (
 
 	"bitbucket.org/indoquran-api/src/config"
 	"bitbucket.org/indoquran-api/src/handlers"
+	"bitbucket.org/indoquran-api/src/helpers"
 	"bitbucket.org/indoquran-api/src/models"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github.com/jbrodriguez/mlog"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
@@ -26,12 +28,17 @@ func VisitorLogger(c *gin.Context) {
 	// get userid from session
 	session := sessions.Default(c)
 	userID := session.Get(config.Config.Session.UserID)
+	ipData, err := helpers.IPToCountry(c, c.ClientIP())
+	if err != nil {
+		mlog.Error(err)
+	}
 
 	// get body request
 	visitor := models.Visitor{
 		ID:        primitive.NewObjectID(),
 		UserID:    fmt.Sprintf("%v", userID),
 		IP:        c.ClientIP(),
+		IPData:    ipData,
 		Path:      c.Request.URL.Path,
 		URL:       c.Request.URL.String(),
 		Method:    c.Request.Method,

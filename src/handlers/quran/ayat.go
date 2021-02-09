@@ -2,7 +2,6 @@ package quran
 
 import (
 	"fmt"
-	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -157,7 +156,7 @@ func getSurat(c *gin.Context, suratID int) (*quran.Surat, error) {
 func createIndexAyat(c *gin.Context) {
 	index := mongo.IndexModel{Keys: bson.M{"txt_id": 1}}
 	if _, err := ayatCollection.Indexes().CreateOne(c, index); err != nil {
-		log.Println("Could not create index:", err)
+		mlog.Warning("Could not create index:", err)
 	}
 }
 
