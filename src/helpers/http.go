@@ -10,7 +10,6 @@ import (
 	"bitbucket.org/indoquran-api/src/models"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
-	"github.com/vmihailenco/msgpack"
 )
 
 const (
@@ -38,7 +37,9 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 			return nil, err
 		}
 
-		b, err := msgpack.Marshal(&ipData)
+		mlog.Info("JSON response from IP to country: %+v", ipData)
+
+		b, err := json.Marshal(&ipData)
 		if err != nil {
 			mlog.Error(err)
 			return nil, err
@@ -55,7 +56,7 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 	if val != "" {
 		mlog.Info("GET redis key : %s", redisKeyIPToCountry+ip)
 
-		err = msgpack.Unmarshal([]byte(val), &ipData)
+		err = json.Unmarshal([]byte(val), &ipData)
 		if err != nil {
 			panic(err)
 		}
