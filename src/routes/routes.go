@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"bitbucket.org/indoquran-api/src/config"
-	"bitbucket.org/indoquran-api/src/handlers"
 	handle_email "bitbucket.org/indoquran-api/src/handlers/email"
 	handle_quran "bitbucket.org/indoquran-api/src/handlers/quran"
 	handle_user "bitbucket.org/indoquran-api/src/handlers/user"
