@@ -1,12 +1,8 @@
 package helpers
 
 import (
-	"bufio"
 	"encoding/json"
-	"log"
-	"math/rand"
 	"net/http"
-	"os"
 	"time"
 
 	"bitbucket.org/indoquran-api/src/config"
@@ -35,8 +31,6 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 			return nil, err
 		}
 
-		request.Header.Set("User-Agent", randomUserAgents())
-
 		response, err := client.Do(request)
 		if err != nil {
 			mlog.Error(err)
@@ -49,8 +43,6 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 			mlog.Error(err)
 			return nil, err
 		}
-
-		mlog.Info("JSON response from IP to country: %+v", ipData)
 
 		b, err := json.Marshal(&ipData)
 		if err != nil {
@@ -76,29 +68,4 @@ func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {
 	}
 
 	return &ipData, nil
-}
-
-func randomUserAgents() string {
-	f, err := os.Open("resources/user-agents.txt")
-	agentCount := 0
-	agents := []string{}
-
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	defer f.Close()
-
-	scanner := bufio.NewScanner(f)
-
-	for scanner.Scan() {
-		agents = append(agents, scanner.Text())
-		agentCount++
-	}
-
-	if err := scanner.Err(); err != nil {
-		log.Fatal(err)
-	}
-
-	return agents[rand.Intn(len(agents)-1)]
 }

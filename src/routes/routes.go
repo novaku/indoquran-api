@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"bitbucket.org/indoquran-api/src/config"
+	"bitbucket.org/indoquran-api/src/handlers"
+	handle_email "bitbucket.org/indoquran-api/src/handlers/email"
 	handle_quran "bitbucket.org/indoquran-api/src/handlers/quran"
 	handle_user "bitbucket.org/indoquran-api/src/handlers/user"
 	"bitbucket.org/indoquran-api/src/middlewares"
@@ -45,6 +47,11 @@ func StartGin() {
 			quran.GET("/search/:searchText", handle_quran.GetSearchAyats)
 			quran.GET("/kata-bijak", handle_quran.GetKataBijak)
 			quran.GET("/topik/:id", handle_quran.GetTopik)
+		}
+
+		email := api.Group("/email")
+		{
+			email.POST("", handle_email.SendEmail)
 		}
 	}
 

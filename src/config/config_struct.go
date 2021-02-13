@@ -23,4 +23,11 @@ type Struct struct {
 	Secret struct {
 		Geolication string `yaml:"geolication"`
 	} `yaml:"secrets"`
+	Email struct {
+		SMTP string `yaml:"smtp"`
+		Port int    `yaml:"port"`
+		From string `yaml:"from"`
+		User string `yaml:"user"`
+		Pass string `yaml:"pass"`
+	} `yaml:"email"`
 }

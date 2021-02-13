@@ -23,3 +23,10 @@ session:
 
 secrets:
   geolication: "d6570d658eff4d299890b61907969c3f"
+
+email:
+  smtp: "smtp.zoho.com"
+  port: 465
+  from: "admin@indoquran.id"
+  user: "admin@indoquran.id"
+  pass: "Karawangman123"
