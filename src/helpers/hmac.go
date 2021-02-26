@@ -13,31 +13,6 @@ import (
 	"github.com/jbrodriguez/mlog"
 )
 
-func encode(txt, enType string) string {
-	var (
-		secret  []byte = []byte(config.Config.Secret.HMAC)
-		message        = []byte(txt)
-		result  string
-	)
-
-	hash := hmac.New(sha256.New, secret)
-	hash.Write(message)
-
-	if enType == "hexis" {
-		// to lowercase hexits
-		result = hex.EncodeToString(hash.Sum(nil))
-		mlog.Info("hexis result for %s = %s", txt, result)
-		return result
-	} else if enType == "base64" {
-		// to base64
-		result = base64.StdEncoding.EncodeToString(hash.Sum(nil))
-		mlog.Info("base64 result for %s = %s", txt, result)
-		return result
-	}
-
-	return ""
-}
-
 // HMACValidation : to validate HMAC
 func HMACValidation(secret, timestamp, encType string) (bool, error) {
 	var (
@@ -68,4 +43,29 @@ func HMACValidation(secret, timestamp, encType string) (bool, error) {
 	isValid = enc == secret
 	mlog.Info("FE = %s, BE = %s, valid = %+v", secret, enc, isValid)
 	return isValid, nil
+}
+
+func encode(txt, enType string) string {
+	var (
+		secret  []byte = []byte(config.Config.Secret.HMAC)
+		message []byte = []byte(txt)
+		result  string
+	)
+
+	hash := hmac.New(sha256.New, secret)
+	hash.Write(message)
+
+	if enType == "hexis" {
+		// to lowercase hexits
+		result = hex.EncodeToString(hash.Sum(nil))
+		mlog.Info("hexis result for %s = %s", txt, result)
+		return result
+	} else if enType == "base64" {
+		// to base64
+		result = base64.StdEncoding.EncodeToString(hash.Sum(nil))
+		mlog.Info("base64 result for %s = %s", txt, result)
+		return result
+	}
+
+	return ""
 }
