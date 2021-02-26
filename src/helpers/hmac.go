@@ -39,18 +39,20 @@ func HMACValidation(secret, timestamp, encType string) (bool, error) {
 		return false, err
 	}
 
-	enc := encode(timestamp, encType)
+	enc := encodeTimestamp(timestamp, encType)
 	isValid = enc == secret
 	mlog.Info("FE = %s, BE = %s, valid = %+v", secret, enc, isValid)
 	return isValid, nil
 }
 
-func encode(txt, enType string) string {
+func encodeTimestamp(txt, enType string) string {
 	var (
 		secret  []byte = []byte(config.Config.Secret.HMAC)
 		message []byte = []byte(txt)
 		result  string
 	)
+
+	mlog.Info("input from user timestamp= %s, encode type=%s", txt, enType)
 
 	hash := hmac.New(sha256.New, secret)
 	hash.Write(message)
