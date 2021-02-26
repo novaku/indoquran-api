@@ -3,6 +3,7 @@ package config
 // Struct : configuration structure
 type Struct struct {
 	Server struct {
+		Host string `yaml:"host"`
 		Port string `yaml:"port"`
 	} `yaml:"server"`
 	Database struct {
@@ -22,6 +23,7 @@ type Struct struct {
 	} `yaml:"session"`
 	Secret struct {
 		Geolication string `yaml:"geolication"`
+		HMAC        string `yaml:"hmac"`
 	} `yaml:"secrets"`
 	Email struct {
 		SMTP string `yaml:"smtp"`

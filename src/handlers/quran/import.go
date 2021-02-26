@@ -17,6 +17,7 @@ import (
 	"bitbucket.org/indoquran-api/src/models/quran/alqurancloud"
 	"bitbucket.org/indoquran-api/src/models/quran/banghasan"
 	"bitbucket.org/indoquran-api/src/models/quran/github"
+	"bitbucket.org/indoquran-api/src/models/quran/kemenag"
 	"github.com/PuerkitoBio/goquery"
 	"github.com/gin-gonic/gin"
 	"github.com/jbrodriguez/mlog"
@@ -431,6 +432,56 @@ func ImportArabText(c *gin.Context) {
 	}
 
 	handlers.DefaultResponse(c, http.StatusOK, "Success update arab text from http", upd)
+}
+
+// ImportArabTextDepag : import from https://quran.kemenag.go.id/api/v1/ayatweb/1/0/0/200
+func ImportArabTextDepag(c *gin.Context) {
+	cur, err := suratCollection.Find(c, bson.M{})
+	if err != nil {
+		mlog.Error(err)
+	}
+	defer cur.Close(c)
+
+	for cur.Next(c) {
+		var result model_quran.Surat
+		err := cur.Decode(&result)
+		if err != nil {
+			mlog.Error(err)
+		}
+
+		getAyatHTTPDataUpdatetDB(c, result.Nomor, result.JumlahAyat)
+	}
+	if err := cur.Err(); err != nil {
+		mlog.Error(err)
+	}
+
+	handlers.DefaultResponse(c, http.StatusOK, "Success Get Data", nil)
+}
+
+func getAyatHTTPDataUpdatetDB(c *gin.Context, suratID, jumAyat int) {
+	modelAyat := &kemenag.Ayat{}
+
+	resp, err := http.Get("https://quran.kemenag.go.id/api/v1/ayatweb/" + strconv.Itoa(suratID) + "/0/0/" + strconv.Itoa(jumAyat))
+	if err != nil {
+		mlog.Error(err)
+	}
+
+	defer resp.Body.Close()
+
+	json.NewDecoder(resp.Body).Decode(&modelAyat)
+
+	for _, v := range modelAyat.Data {
+		filter := bson.M{
+			"surat": v.SuraID,
+			"nomor": v.AyaNumber,
+		}
+		update := bson.M{"$set": bson.M{"txt_ar": v.AyaText}}
+		_, err = ayatCollection.UpdateOne(c, filter, update)
+		if err != nil {
+			mlog.Error(err)
+		}
+		mlog.Info("Updated kemenag data, Surat: %d, Ayat: %d / %d", v.SuraID, v.AyaNumber, jumAyat)
+	}
 }
 
 // ImportWiseWords : function to import wise words from local file

@@ -1,5 +1,6 @@
 # Server configurations
 server:
+  host: "localhost"
   port: "8000"
 
 # Database credentials
@@ -22,10 +23,11 @@ session:
 
 secrets:
   geolication: "d6570d658eff4d299890b61907969c3f"
+  hmac: "D5DCECAAE5C95564DBF5B9ED59C7C"
 
 email:
-  smtp: "smtp.zoho.com"
-  port: 465
+  smtp: "smtp.gmail.com"
+  port: 587
   from: "admin@indoquran.id"
-  user: "admin@indoquran.id"
+  user: "kontak@indoquran.web.id"
   pass: "Karawangman123"

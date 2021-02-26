@@ -64,8 +64,9 @@ func StartGin() {
 		// imp.GET("/tafsir/move", handle_quran.ImportTafsirMove)
 		// imp.GET("/image", handle_quran.ImportImage)
 		// imp.GET("/arab-text", handle_quran.ImportArabText)
+		imp.GET("/arab-text-depag", handle_quran.ImportArabTextDepag)
 		// imp.GET("/wise-words", handle_quran.ImportWiseWords)
-		imp.GET("/ayat-id", handle_quran.AddAyatID)
+		// imp.GET("/ayat-id", handle_quran.AddAyatID)
 	}
 
 	r.Run(":" + port)

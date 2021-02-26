@@ -1,10 +1,10 @@
 # Server configurations
 server:
+  host: "localhost"
   port: "8080"
 
 # Database credentials
 database:
-  # uri: "mongodb://indoquran:indoquran@localhost:27017/?serverSelectionTimeoutMS=5000&connectTimeoutMS=10000&authSource=indoquran&authMechanism=SCRAM-SHA-256"
   uri: "mongodb+srv://nova:admin123@cluster0.df2xr.mongodb.net/admin?replicaSet=atlas-vi2i0z-shard-0&readPreference=primary&connectTimeoutMS=10000&authSource=admin&authMechanism=SCRAM-SHA-1"
   dbname: "indoquran"
 
@@ -23,10 +23,11 @@ session:
 
 secrets:
   geolication: "d6570d658eff4d299890b61907969c3f"
+  hmac: "393B8954C347B2669D51929A6E759"
 
 email:
-  smtp: "smtp.zoho.com"
-  port: 465
+  smtp: "smtp.gmail.com"
+  port: 587
   from: "admin@indoquran.id"
-  user: "admin@indoquran.id"
+  user: "kontak@indoquran.web.id"
   pass: "Karawangman123"

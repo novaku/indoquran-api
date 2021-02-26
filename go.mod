@@ -14,7 +14,9 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
+	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/ompluscator/dynamic-struct v1.2.0
+	github.com/ssor/bom v0.0.0-20170718123548-6386211fdfcf // indirect
 	github.com/tidwall/gjson v1.6.7
 	github.com/ugorji/go v1.2.0 // indirect
 	github.com/vmihailenco/msgpack v4.0.4+incompatible
@@ -30,4 +32,5 @@ require (
 	gopkg.in/check.v1 v1.0.0-20200902074654-038fdea0a05b // indirect
 	gopkg.in/gomail.v2 v2.0.0-20160411212932-81ebce5c23df
 	gopkg.in/yaml.v2 v2.3.0
+	jaytaylor.com/html2text v0.0.0-20200412013138-3577fbdbcff7
 )

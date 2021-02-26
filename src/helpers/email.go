@@ -17,6 +17,7 @@ func (e *Email) Send(ctx *gin.Context, m *email.Email) error {
 	mail := gomail.NewMessage()
 	mail.SetHeader("From", m.From)
 	mail.SetHeader("To", m.To)
+	mail.SetAddressHeader("Cc", m.From, m.From)
 	mail.SetHeader("Subject", m.Subject)
 	mail.SetBody("text/plain", m.Body)
 
