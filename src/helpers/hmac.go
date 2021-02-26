@@ -62,7 +62,7 @@ func encodeTimestamp(txt, enType string) string {
 		result = hex.EncodeToString(hash.Sum(nil))
 		mlog.Info("hexis result for %s = %s", txt, result)
 		return result
-	} else if enType == "base64" {
+	} else if enType == "base64" || enType == "" { // added if empty request
 		// to base64
 		result = base64.StdEncoding.EncodeToString(hash.Sum(nil))
 		mlog.Info("base64 result for %s = %s", txt, result)
