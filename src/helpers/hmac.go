@@ -57,9 +57,9 @@ func HMACValidation(secret, timestamp, encType string) (bool, error) {
 	}
 	stampTime = time.Unix(stamp, 0)
 
-	expireTime = now.Add(12 * time.Hour) // HMAC expire in 1 hours
+	expireTime = now.Add(12 * time.Hour) // HMAC expire in 12 hours
 	if now.Before(stampTime) {
-		err = fmt.Errorf("HMAC expire at %s", expireTime.Format("2006-01-02 15:04:05"))
+		err = fmt.Errorf("TimeStamp = %s, HMAC expire at %s", stampTime.Format("2006-01-02 15:04:05"), expireTime.Format("2006-01-02 15:04:05"))
 		mlog.Error(err)
 		return false, err
 	}
