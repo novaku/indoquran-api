@@ -44,7 +44,7 @@ func findAyat(c *gin.Context, search, sortBy string, surat, juz int, rowsPerPage
 	if search != "" && surat == 0 {
 		findFilter = bson.M{"$text": bson.M{"$search": search}}
 
-		if juz != 0 {
+		if juz > 0 {
 			findFilter = bson.M{
 				"$and": []bson.M{
 					{"$text": bson.M{"$search": search}},
@@ -52,7 +52,7 @@ func findAyat(c *gin.Context, search, sortBy string, surat, juz int, rowsPerPage
 				},
 			}
 		}
-	} else if search != "" && surat != 0 {
+	} else if search != "" && surat > 0 {
 		findFilter = bson.M{
 			"$and": []bson.M{
 				{"$text": bson.M{"$search": search}},
@@ -69,7 +69,7 @@ func findAyat(c *gin.Context, search, sortBy string, surat, juz int, rowsPerPage
 				},
 			}
 		}
-	} else if search == "" && surat != 0 {
+	} else if search == "" && surat > 0 {
 		findFilter = bson.M{"surat": surat}
 
 		if juz != 0 {
