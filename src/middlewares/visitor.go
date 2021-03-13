@@ -25,29 +25,33 @@ var (
 
 // VisitorLogger : middleware to log visitor acccess
 func VisitorLogger(c *gin.Context) {
-	// get userid from session
-	session := sessions.Default(c)
-	userID := session.Get(config.Config.Session.UserID)
-	ipData, err := helpers.IPToCountry(c, c.ClientIP())
-	if err != nil {
-		mlog.Error(err)
-	}
+	cc := c.Copy()
 
-	// get body request
-	visitor := models.Visitor{
-		ID:        primitive.NewObjectID(),
-		UserID:    fmt.Sprintf("%v", userID),
-		IP:        c.ClientIP(),
-		IPData:    ipData,
-		Path:      c.Request.URL.Path,
-		URL:       c.Request.URL.String(),
-		Method:    c.Request.Method,
-		UserAgent: c.Request.Header.Get("User-Agent"),
-		Ref:       c.Request.Header.Get("Referer"),
-		Time:      time.Now(),
-	}
+	go func() {
+		// get userid from session
+		session := sessions.Default(cc)
+		userID := session.Get(config.Config.Session.UserID)
+		ipData, err := helpers.IPToCountry(cc, cc.ClientIP())
+		if err != nil {
+			mlog.Error(err)
+		}
 
-	visitorCollection.InsertOne(c, visitor)
+		// get body request
+		visitor := models.Visitor{
+			ID:        primitive.NewObjectID(),
+			UserID:    fmt.Sprintf("%v", userID),
+			IP:        cc.ClientIP(),
+			IPData:    ipData,
+			Path:      cc.Request.URL.Path,
+			URL:       cc.Request.URL.String(),
+			Method:    cc.Request.Method,
+			UserAgent: cc.Request.Header.Get("User-Agent"),
+			Ref:       cc.Request.Header.Get("Referer"),
+			Time:      time.Now(),
+		}
+
+		visitorCollection.InsertOne(cc, visitor)
+	}()
 
 	c.Next()
 }
