@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"os"
+	"strings"
 
 	"bitbucket.org/indoquran-api/src/config/logger"
 	"github.com/jbrodriguez/mlog"
@@ -21,6 +22,7 @@ func init() {
 		env = "development"
 	}
 
+	env = strings.ToLower(strings.TrimSpace(env))
 	configFile := fmt.Sprintf("src/config/yaml/%s.yml", env)
 
 	f, err := os.Open(configFile)
