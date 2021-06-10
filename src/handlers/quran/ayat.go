@@ -176,7 +176,10 @@ func GetSearchAyats(c *gin.Context) {
 
 	val, err := cache.Get(c, redisKey).Result()
 	if err != nil || val == "" {
-		var ayat quran.Ayat
+		var (
+			ayat  quran.Ayat
+			latin quran.Latin
+		)
 		ayats := make([]format.Ayat, 0)
 
 		createIndexAyat(c)
@@ -214,6 +217,10 @@ func GetSearchAyats(c *gin.Context) {
 			suratPad := fmt.Sprintf("%0*d", 3, ayat.Surat)
 			ayatPad := fmt.Sprintf("%0*d", 3, ayat.Nomor)
 
+			if err = latinCollection.FindOne(c, bson.M{"surat": ayat.Surat, "ayat": ayat.Nomor}).Decode(&latin); err != nil {
+				mlog.Error(err)
+			}
+
 			result := format.Ayat{
 				ID:        ayat.ID,
 				Nomor:     ayat.Nomor,
@@ -223,7 +230,7 @@ func GetSearchAyats(c *gin.Context) {
 				Juz:       ayat.Juz,
 				TxtAR:     ayat.TxtAR,
 				TxtID:     ayat.TxtID,
-				TxtIDT:    ayat.TxtIDT,
+				TxtIDT:    latin.Latin,
 				TxtTafsir: ayat.TxtTafsir,
 				Image:     ayat.Image,
 				Audio:     fmt.Sprintf(audioURL, suratPad, ayatPad),

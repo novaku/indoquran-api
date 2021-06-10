@@ -54,20 +54,21 @@ func StartGin() {
 		}
 	}
 
-	imp := r.Group("/import")
-	{
-		// imp.GET("/surat", handle_quran.ImportSurat)
-		// imp.GET("/ayat", handle_quran.ImportAyat)
-		// imp.GET("/catatan", handle_quran.ImportCatatan)
-		// imp.GET("/tafsir", handle_quran.ImportTafsir)
-		// imp.GET("/juz", handle_quran.ImportJuz)
-		// imp.GET("/tafsir/move", handle_quran.ImportTafsirMove)
-		// imp.GET("/image", handle_quran.ImportImage)
-		// imp.GET("/arab-text", handle_quran.ImportArabText)
-		imp.GET("/arab-text-depag", handle_quran.ImportArabTextDepag)
-		// imp.GET("/wise-words", handle_quran.ImportWiseWords)
-		// imp.GET("/ayat-id", handle_quran.AddAyatID)
-	}
+	// imp := r.Group("/import")
+	// {
+	// imp.GET("/surat", handle_quran.ImportSurat)
+	// imp.GET("/ayat", handle_quran.ImportAyat)
+	// imp.GET("/catatan", handle_quran.ImportCatatan)
+	// imp.GET("/tafsir", handle_quran.ImportTafsir)
+	// imp.GET("/juz", handle_quran.ImportJuz)
+	// imp.GET("/tafsir/move", handle_quran.ImportTafsirMove)
+	// imp.GET("/image", handle_quran.ImportImage)
+	// imp.GET("/arab-text", handle_quran.ImportArabText)
+	// imp.GET("/arab-text-depag", handle_quran.ImportArabTextDepag)
+	// imp.GET("/wise-words", handle_quran.ImportWiseWords)
+	// imp.GET("/ayat-id", handle_quran.AddAyatID)
+	// 	imp.GET("/ayat-latin", handle_quran.ImportLatin)
+	// }
 
 	r.Run(":" + port)
 }

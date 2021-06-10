@@ -15,6 +15,7 @@ const (
 	tafsirCollName    = "tafsir"
 	kataBijakCollName = "kata_bijak"
 	topikCollName     = "topik"
+	latinCollName     = "latin"
 	imageURL          = "http://cdn.islamic.network/quran/images/%d_%d.png"
 	audioURL          = "https://audio.qurancdn.com/Alafasy/mp3/%s%s.mp3"
 	topikParentIcon   = "work_outline"
@@ -36,6 +37,7 @@ var (
 	tafsirCollection    = db.Collection(tafsirCollName)
 	kataBijakCollection = db.Collection(kataBijakCollName)
 	topikCollection     = db.Collection(topikCollName)
+	latinCollection     = db.Collection(latinCollName)
 )
 
 func redisKeyGeneratorAyat(search, sortBy string, suratID, ayatID, juz int, rowsPerPage, page int64, descending bool) string {

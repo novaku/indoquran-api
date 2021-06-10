@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"strconv"
+	"sync"
 	"time"
 
 	"bitbucket.org/indoquran-api/src/handlers"
@@ -544,4 +545,81 @@ func AddAyatID(c *gin.Context) {
 		}
 	}
 	handlers.DefaultResponse(c, http.StatusOK, "Success update ayat_id", nil)
+}
+
+func ImportLatin(c *gin.Context) {
+	var (
+		links []string
+		wg    sync.WaitGroup
+	)
+
+	res, err := http.Get("https://litequran.net")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		log.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	doc.Find(".list").Children().Each(func(i int, sel *goquery.Selection) {
+		l, _ := sel.Find("a").Attr("href")
+		links = append(links, l)
+	})
+
+	for i := 1; i <= len(links); i++ {
+		wg.Add(1)
+		go workerImportLatin(c, links[i-1], i, &wg)
+	}
+	handlers.DefaultResponse(c, http.StatusOK, "Success", links)
+}
+
+func workerImportLatin(c *gin.Context, link string, id int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	type latin struct {
+		Surat int
+		Ayat  int
+		Latin string
+	}
+
+	mlog.Info("Worker %s starting", link)
+
+	res, err := http.Get(link)
+	if err != nil {
+		mlog.Fatal(err)
+	}
+	defer res.Body.Close()
+
+	if res.StatusCode != 200 {
+		mlog.Fatalf("status code error: %d %s", res.StatusCode, res.Status)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(res.Body)
+	if err != nil {
+		mlog.Fatal(err)
+	}
+
+	doc.Find(".bacaan").Each(func(i int, sel *goquery.Selection) {
+		bacaan := sel.Text()
+		ayat := i + 1
+
+		res, err := latinCollection.InsertOne(c, &latin{
+			Surat: id,
+			Ayat:  ayat,
+			Latin: bacaan,
+		})
+		if err != nil {
+			mlog.Error(err)
+		}
+		mlog.Info("surat: %d, ayat: %d, bacaan: %s, insertedID: %s", id, ayat, bacaan, res.InsertedID)
+	})
+
+	mlog.Info("Worker %s done", link)
 }
