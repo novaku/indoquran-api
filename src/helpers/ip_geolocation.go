@@ -16,7 +16,7 @@ const (
 	redisKeyIPToCountry = "redis:iptocuntry:"
 )
 
-var cache = *handlers.RedisConfig()
+var cache = *handlers.RedisInstance()
 
 // IPToCountry : IP to country data
 func IPToCountry(c *gin.Context, ip string) (*models.IPToCountryStruct, error) {

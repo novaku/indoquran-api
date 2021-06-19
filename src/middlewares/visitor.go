@@ -19,7 +19,7 @@ const (
 )
 
 var (
-	db                = *handlers.MongoConfig()
+	db                = *handlers.MongoInstance()
 	visitorCollection = db.Collection(visitorCollName)
 )
 
@@ -27,31 +27,33 @@ var (
 func VisitorLogger(c *gin.Context) {
 	cc := c.Copy()
 
-	go func() {
-		// get userid from session
-		session := sessions.Default(cc)
-		userID := session.Get(config.Config.Session.UserID)
-		ipData, err := helpers.IPToCountry(cc, cc.ClientIP())
-		if err != nil {
-			mlog.Error(err)
-		}
+	if url := cc.Request.URL.String(); url != "/api/quran/kata-bijak" {
+		go func() {
+			// get userid from session
+			session := sessions.Default(cc)
+			userID := session.Get(config.Config.Session.UserID)
+			ipData, err := helpers.IPToCountry(cc, cc.ClientIP())
+			if err != nil {
+				mlog.Error(err)
+			}
 
-		// get body request
-		visitor := models.Visitor{
-			ID:        primitive.NewObjectID(),
-			UserID:    fmt.Sprintf("%v", userID),
-			IP:        cc.ClientIP(),
-			IPData:    ipData,
-			Path:      cc.Request.URL.Path,
-			URL:       cc.Request.URL.String(),
-			Method:    cc.Request.Method,
-			UserAgent: cc.Request.Header.Get("User-Agent"),
-			Ref:       cc.Request.Header.Get("Referer"),
-			Time:      time.Now(),
-		}
+			// get body request
+			visitor := models.Visitor{
+				ID:        primitive.NewObjectID(),
+				UserID:    fmt.Sprintf("%v", userID),
+				IP:        cc.ClientIP(),
+				IPData:    ipData,
+				Path:      cc.Request.URL.Path,
+				URL:       cc.Request.URL.String(),
+				Method:    cc.Request.Method,
+				UserAgent: cc.Request.Header.Get("User-Agent"),
+				Ref:       cc.Request.Header.Get("Referer"),
+				Time:      time.Now(),
+			}
 
-		visitorCollection.InsertOne(cc, visitor)
-	}()
+			visitorCollection.InsertOne(cc, visitor)
+		}()
+	}
 
 	c.Next()
 }

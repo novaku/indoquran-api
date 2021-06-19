@@ -8,7 +8,7 @@ const (
 )
 
 var (
-	db                     = *handlers.MongoConfig()
+	db                     = *handlers.MongoInstance()
 	userCollection         = db.Collection(userCollName)
 	loginHistoryCollection = db.Collection(loginHistoryCollName)
 )

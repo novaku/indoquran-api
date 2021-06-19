@@ -29,8 +29,8 @@ var (
 )
 
 var (
-	db                  = *handlers.MongoConfig()
-	cache               = *handlers.RedisConfig()
+	db                  = *handlers.MongoInstance()
+	cache               = *handlers.RedisInstance()
 	suratCollection     = db.Collection(suratCollName)
 	ayatCollection      = db.Collection(ayatCollName)
 	catatanCollection   = db.Collection(catatanCollName)

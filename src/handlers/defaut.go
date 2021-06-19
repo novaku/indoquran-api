@@ -18,8 +18,8 @@ func DefaultResponse(c *gin.Context, httpCode int, message string, obj interface
 	return
 }
 
-// MongoConfig : Get DB from Mongo Config
-func MongoConfig() *mongo.Database {
+// MongoInstance : Get DB from Mongo Config
+func MongoInstance() *mongo.Database {
 	db, err := config.GetMongoDB()
 	if err != nil {
 		log.Println("Connect to Mongo failed, ERROR : ", err)
@@ -27,8 +27,8 @@ func MongoConfig() *mongo.Database {
 	return db
 }
 
-// RedisConfig : get cache from Redis config
-func RedisConfig() *redis.Client {
+// RedisInstance : get cache from Redis config
+func RedisInstance() *redis.Client {
 	opt, err := config.GetRedis()
 	if err != nil {
 		log.Println("Connect to redis failed, ERROR : ", err)
