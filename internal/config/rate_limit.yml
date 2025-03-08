@@ -1,0 +1,13 @@
+rate_limits:
+  /api/v1/search:
+    rate: 10        # 10 requests per second
+    burst: 20
+  /api/v1/surat:
+    rate: 10
+    burst: 10
+  /api/v1/surat/*:
+    rate: 10
+    burst: 10
+  /api/v1/ayat/*:
+    rate: 10
+    burst: 10

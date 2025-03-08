@@ -1,0 +1,40 @@
+services:
+  mysql:
+    image: mysql:latest
+    container_name: persistent-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: indoquran
+      MYSQL_USER: indoquran
+      MYSQL_PASSWORD: indoquran
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./data/mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:latest
+    container_name: persistent-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data/redis-data:/data
+    command: ["redis-server", "--appendonly", "yes"]
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: indoquran-api
+    ports:
+      - "8090:8090"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_started
