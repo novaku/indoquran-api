@@ -4,6 +4,9 @@ run:
 run-log:
 	ENV ENV=local go run cmd/api/main.go >> output.log 2>&1
 
+run-prd:
+	ENV ENV=heroku go run cmd/api/main.go
+
 test:
 	go test ./... -coverprofile=coverage.out -covermode=atomic
 
