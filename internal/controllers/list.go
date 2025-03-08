@@ -3,8 +3,9 @@ package controllers
 import (
 	"strconv"
 
+	"indoquran-api/internal/services/list"
+
 	"github.com/gin-gonic/gin"
-	"indoquran.web.id/internal/services/list"
 )
 
 // ListSurat list of surat

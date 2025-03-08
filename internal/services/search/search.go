@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"indoquran.web.id/internal/cache"
-	"indoquran.web.id/internal/model"
-	"indoquran.web.id/pkg/logger"
+	"indoquran-api/internal/cache"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/logger"
 )
 
 // FullTextSearch performs a full-text search on the database.

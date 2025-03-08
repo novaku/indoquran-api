@@ -6,10 +6,11 @@ import (
 	"net/http"
 	"time"
 
+	"indoquran-api/internal/database"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/logger"
+
 	"github.com/gin-gonic/gin"
-	"indoquran.web.id/internal/database"
-	"indoquran.web.id/internal/model"
-	"indoquran.web.id/pkg/logger"
 )
 
 // Middleware to log request and response asynchronously

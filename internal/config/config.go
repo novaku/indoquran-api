@@ -3,8 +3,9 @@ package config
 import (
 	"os"
 
+	"indoquran-api/pkg/logger"
+
 	"github.com/spf13/viper"
-	"indoquran.web.id/pkg/logger"
 )
 
 // LoadConfig loads the configuration from the config file

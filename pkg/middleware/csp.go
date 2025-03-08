@@ -3,8 +3,9 @@ package middleware
 import (
 	"net/http"
 
+	"indoquran-api/pkg/logger"
+
 	"github.com/gin-gonic/gin"
-	"indoquran.web.id/pkg/logger"
 )
 
 // Middleware CSP

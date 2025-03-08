@@ -7,10 +7,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"indoquran-api/internal/model"
+
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"indoquran.web.id/internal/model"
 )
 
 type MockSearch struct {

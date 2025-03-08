@@ -8,12 +8,13 @@ import (
 	"syscall"
 	"time"
 
+	"indoquran-api/internal/controllers"
+	"indoquran-api/pkg/logger"
+	"indoquran-api/pkg/middleware"
+
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-	"indoquran.web.id/internal/controllers"
-	"indoquran.web.id/pkg/logger"
-	"indoquran.web.id/pkg/middleware"
 )
 
 type (

@@ -1,6 +1,6 @@
 package controllers
 
-import "indoquran.web.id/internal/model"
+import "indoquran-api/internal/model"
 
 type (
 	ResultJsonFormat struct {

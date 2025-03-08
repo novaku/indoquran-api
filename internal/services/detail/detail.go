@@ -5,12 +5,13 @@ import (
 	"fmt"
 	"time"
 
+	"indoquran-api/internal/cache"
+	"indoquran-api/internal/database"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/logger"
+
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
-	"indoquran.web.id/internal/cache"
-	"indoquran.web.id/internal/database"
-	"indoquran.web.id/internal/model"
-	"indoquran.web.id/pkg/logger"
 )
 
 type (

@@ -3,11 +3,12 @@ package main
 import (
 	"os"
 
+	v1Router "indoquran-api/api/v1"
+	"indoquran-api/internal/cache"
+	"indoquran-api/internal/config"
+	"indoquran-api/internal/database"
+
 	"github.com/gin-gonic/gin"
-	v1Router "indoquran.web.id/api/v1"
-	"indoquran.web.id/internal/cache"
-	"indoquran.web.id/internal/config"
-	"indoquran.web.id/internal/database"
 )
 
 func main() {

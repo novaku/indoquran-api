@@ -4,10 +4,11 @@ import (
 	"fmt"
 	"strings"
 
+	"indoquran-api/internal/database"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/logger"
+
 	"gorm.io/gorm"
-	"indoquran.web.id/internal/database"
-	"indoquran.web.id/internal/model"
-	"indoquran.web.id/pkg/logger"
 )
 
 // buildSQLLikeClause builds the LIKE clause for the search query.

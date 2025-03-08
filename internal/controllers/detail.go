@@ -1,8 +1,9 @@
 package controllers
 
 import (
+	"indoquran-api/internal/services/detail"
+
 	"github.com/gin-gonic/gin"
-	"indoquran.web.id/internal/services/detail"
 )
 
 // DetailAyat handles the GET request for retrieving ayat details

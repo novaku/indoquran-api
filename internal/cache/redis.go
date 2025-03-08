@@ -3,10 +3,11 @@ package cache
 import (
 	"fmt"
 
+	"indoquran-api/internal/config"
+	"indoquran-api/pkg/logger"
+
 	"github.com/go-redis/redis"
 	"github.com/spf13/viper"
-	"indoquran.web.id/internal/config"
-	"indoquran.web.id/pkg/logger"
 )
 
 var redisClient *redis.Client

@@ -5,9 +5,10 @@ import (
 	"net/http"
 	"strconv"
 
+	"indoquran-api/internal/services/search"
+	"indoquran-api/pkg/logger"
+
 	"github.com/gin-gonic/gin"
-	"indoquran.web.id/internal/services/search"
-	"indoquran.web.id/pkg/logger"
 )
 
 // ResultJsonFormat search full text search result

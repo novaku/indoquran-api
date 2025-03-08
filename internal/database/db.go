@@ -6,11 +6,12 @@ import (
 	"os"
 	"time"
 
+	"indoquran-api/internal/config"
+	"indoquran-api/pkg/logger"
+
 	"github.com/spf13/viper"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"indoquran.web.id/internal/config"
-	"indoquran.web.id/pkg/logger"
 )
 
 var db *gorm.DB
