@@ -44,28 +44,36 @@ To run the project in debug mode locally:
 
 ```shell
 indoquran/ 
-├── api/ 
-│ └── v1/ 
-│ └── routes/ 
-│ └── routes.go 
-├── internal/ 
-│ ├── config/ 
-│ │ └── rate_limit.yml 
-│ └── controllers/ 
-│ ├── search_handler.go 
-│ ├── list_surat.go 
-│ ├── list_ayat_in_surat.go 
-│ └── detail_ayat.go 
-├── pkg/ 
-│ ├── logger/ 
-│ │ └── logger.go 
-│ └── middleware/ 
-│ ├── logging_middleware.go 
-│ ├── rate_limiter.go 
-│ ├── timeout_middleware.go 
-│ └── content_security_policy.go 
-├── main.go 
-├── go.mod 
-├── go.sum 
-└── README.md
+├── api/                    # API layer containing versioned endpoints
+│   └── v1/                # Version 1 of the API
+│       └── routes/        # Route definitions and handlers mapping
+│           └── routes.go  # Main routes configuration
+├── internal/              # Private application code
+│   ├── config/           # Configuration files and settings
+│   │   └── rate_limit.yml # Rate limiting configuration
+│   └── controllers/      # Request handlers and business logic
+│       ├── search_handler.go      # Search functionality
+│       ├── list_surat.go         # Surah listing handler
+│       ├── list_ayat_in_surat.go # Ayah listing handler
+│       └── detail_ayat.go        # Detailed ayah information
+├── pkg/                  # Public packages that can be used by external services
+│   ├── logger/          # Logging functionality
+│   │   └── logger.go    # Logger implementation
+│   └── middleware/      # HTTP middleware components
+│       ├── logging_middleware.go     # Request logging
+│       ├── rate_limiter.go          # Rate limiting implementation
+│       ├── timeout_middleware.go     # Request timeout handling
+│       └── content_security_policy.go # CSP implementation
+├── main.go              # Application entry point
+├── go.mod              # Go modules definition
+├── go.sum              # Go modules checksum
+└── README.md           # Project documentation
 ```
+
+This structure follows Go best practices with clear separation of concerns:
+- `api/` handles routing and API versioning
+- `internal/` contains private application code
+- `pkg/` houses reusable packages
+- Root level contains configuration files and the main entry point
+
+The organization makes it easy to maintain, test, and scale the application while keeping related code grouped together logically.
