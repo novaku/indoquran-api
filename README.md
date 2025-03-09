@@ -37,9 +37,7 @@ The API uses configuration files for various settings:
 
 To run the project in debug mode locally:
 
-
-export ENV=local
-make run
+`make run`
 
 
 ## Project Structure
