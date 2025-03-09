@@ -39,7 +39,7 @@ To run the project in debug mode locally:
 
 
 export ENV=local
-go run main.go
+make run
 
 
 ## Project Structure
