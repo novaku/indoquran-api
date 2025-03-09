@@ -3,11 +3,10 @@ package search
 import (
 	"encoding/json"
 	"fmt"
-	"time"
-
-	"indoquran-api/internal/cache"
 	"indoquran-api/internal/model"
+	"indoquran-api/pkg/cache"
 	"indoquran-api/pkg/logger"
+	"time"
 )
 
 // FullTextSearch performs a full-text search on the database.

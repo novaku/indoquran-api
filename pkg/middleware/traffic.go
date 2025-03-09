@@ -2,13 +2,12 @@ package middleware
 
 import (
 	"bytes"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/database"
+	"indoquran-api/pkg/logger"
 	"io"
 	"net/http"
 	"time"
-
-	"indoquran-api/internal/database"
-	"indoquran-api/internal/model"
-	"indoquran-api/pkg/logger"
 
 	"github.com/gin-gonic/gin"
 )

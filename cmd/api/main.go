@@ -4,9 +4,9 @@ import (
 	"os"
 
 	v1Router "indoquran-api/api/v1"
-	"indoquran-api/internal/cache"
 	"indoquran-api/internal/config"
-	"indoquran-api/internal/database"
+	"indoquran-api/pkg/cache"
+	"indoquran-api/pkg/database"
 
 	"github.com/gin-gonic/gin"
 )

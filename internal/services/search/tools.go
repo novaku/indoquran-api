@@ -2,11 +2,10 @@ package search
 
 import (
 	"fmt"
-	"strings"
-
-	"indoquran-api/internal/database"
 	"indoquran-api/internal/model"
+	"indoquran-api/pkg/database"
 	"indoquran-api/pkg/logger"
+	"strings"
 
 	"gorm.io/gorm"
 )

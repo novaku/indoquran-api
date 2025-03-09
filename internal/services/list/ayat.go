@@ -3,13 +3,12 @@ package list
 import (
 	"encoding/json"
 	"fmt"
+	"indoquran-api/internal/model"
+	"indoquran-api/pkg/cache"
+	"indoquran-api/pkg/database"
+	"indoquran-api/pkg/logger"
 	"strconv"
 	"time"
-
-	"indoquran-api/internal/cache"
-	"indoquran-api/internal/database"
-	"indoquran-api/internal/model"
-	"indoquran-api/pkg/logger"
 
 	"github.com/go-redis/redis"
 	"gorm.io/gorm"
