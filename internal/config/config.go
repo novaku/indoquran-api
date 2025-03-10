@@ -13,7 +13,7 @@ func LoadConfig() {
 	// Set the default environment to "local" if not set
 	env := os.Getenv("ENV")
 	if env == "" {
-		env = "local"
+		env = "heroku"
 	}
 
 	viper.SetConfigName(env)

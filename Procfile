@@ -1,1 +1,1 @@
-web: ENV ENV=heroku go run cmd/api/main.go
+web: go run cmd/api/main.go
