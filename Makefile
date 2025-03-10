@@ -1,4 +1,4 @@
-run:
+run-local:
 	ENV ENV=local GIN_MODE=debug go run cmd/api/main.go
 
 run-log:
@@ -21,7 +21,10 @@ ven:
 	go mod vendor
 
 build:
-	ENV ENV=docker go build -o bin/indoquran cmd/api/main.go
+	ENV ENV=heroku go build -o indoquran-api cmd/api/main.go
+
+run:
+    ./indoquran-api
 
 dok:
 	docker-compose up --build -d
