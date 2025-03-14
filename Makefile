@@ -21,10 +21,7 @@ ven:
 	go mod vendor
 
 build:
-	ENV ENV=heroku go build -o indoquran-api cmd/api/main.go
-
-run:
-    ./indoquran-api
+	ENV ENV=heroku go build -o bin/indoquran-api cmd/api/main.go
 
 dok:
 	docker-compose up --build -d
