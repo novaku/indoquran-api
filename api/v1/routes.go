@@ -17,6 +17,7 @@ import (
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"github.com/spf13/viper"
 	"go.uber.org/zap"
 )
@@ -49,8 +50,12 @@ func (s *Server) RunRouter() {
 	g := s.g
 
 	// Initialize database and Redis
-	db := database.GetDB()
-	redisClient := cache.GetRedis()
+	db := database.NewMySQLDatabase().GetConnection()
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     cache.NewRedisConfig().GetAddress(),
+		Password: cache.NewRedisConfig().GetPassword(),
+		DB:       cache.NewRedisConfig().GetDB(),
+	})
 
 	// Initialize services
 	detailService := detail.NewDetailService(detail.NewRedisCacheService(), detail.NewGormDatabaseService())

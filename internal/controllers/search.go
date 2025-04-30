@@ -8,6 +8,8 @@ import (
 	"indoquran-api/pkg/cache"
 	"indoquran-api/pkg/database"
 
+	"github.com/go-redis/redis"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -136,7 +138,14 @@ func (sc *SearchController) SearchHandler(c *gin.Context) {
 // DefaultSearchController returns a new SearchController with default implementations
 func DefaultSearchController() SearchControllerInterface {
 	return NewSearchController(
-		search.NewSearchService(database.GetDB(), cache.GetRedis()),
+		search.NewSearchService(
+			database.NewMySQLDatabase().GetConnection(),
+			redis.NewClient(&redis.Options{
+				Addr:     cache.NewRedisConfig().GetAddress(),
+				Password: cache.NewRedisConfig().GetPassword(),
+				DB:       cache.NewRedisConfig().GetDB(),
+			}),
+		),
 		NewDefaultSearchRequestValidator(),
 		NewDefaultSearchResponseBuilder(),
 	)

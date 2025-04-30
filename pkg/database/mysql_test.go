@@ -7,11 +7,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestInitDatabase(t *testing.T) {
+func TestDatabaseConnection(t *testing.T) {
 	tests := []struct {
 		name        string
 		dbConfig    map[string]string
-		expectPanic bool
+		expectError bool
 	}{
 		{
 			name: "Invalid database configuration",
@@ -22,7 +22,7 @@ func TestInitDatabase(t *testing.T) {
 				"DB_PORT":     "3306",
 				"DB_NAME":     "invalid",
 			},
-			expectPanic: true,
+			expectError: true,
 		},
 		{
 			name: "Valid database configuration",
@@ -33,27 +33,26 @@ func TestInitDatabase(t *testing.T) {
 				"DB_PORT":     "3306",
 				"DB_NAME":     "indoquran",
 			},
-			expectPanic: false,
+			expectError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset db connection
-			db = nil
-
 			// Set viper config
 			for k, v := range tt.dbConfig {
 				viper.Set(k, v)
 			}
 
-			if tt.expectPanic {
-				assert.Panics(t, func() {
-					InitDatabase()
-				})
+			mysqlDB := NewMySQLDatabase()
+			dbManager := NewDatabaseManager(mysqlDB)
+			err := dbManager.Initialize()
+
+			if tt.expectError {
+				assert.Error(t, err)
 			} else {
-				InitDatabase()
-				assert.NotNil(t, db)
+				assert.NoError(t, err)
+				assert.NotNil(t, dbManager.GetDB())
 			}
 		})
 	}
@@ -79,8 +78,8 @@ func TestGetDB(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Reset db connection
-			db = nil
+			mysqlDB := NewMySQLDatabase()
+			dbManager := NewDatabaseManager(mysqlDB)
 
 			if tt.setupDB {
 				viper.Set("DB_USER", "root")
@@ -88,10 +87,11 @@ func TestGetDB(t *testing.T) {
 				viper.Set("DB_HOST", "localhost")
 				viper.Set("DB_PORT", "3306")
 				viper.Set("DB_NAME", "indoquran")
-				InitDatabase()
+				err := dbManager.Initialize()
+				assert.NoError(t, err)
 			}
 
-			result := GetDB()
+			result := dbManager.GetDB()
 
 			if tt.expectNil {
 				assert.Nil(t, result)

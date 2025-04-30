@@ -14,14 +14,25 @@ import (
 	"gorm.io/gorm"
 )
 
-var db *gorm.DB
+// Database interface defines the contract for database operations
+type Database interface {
+	Connect() error
+	GetConnection() *gorm.DB
+	Close() error
+}
 
-// InitDatabase initializes the database connection
-func InitDatabase() {
-	var (
-		err   error
-		sqlDB *sql.DB
-	)
+// MySQLDatabase implements the Database interface
+type MySQLDatabase struct {
+	DB *gorm.DB
+}
+
+// NewMySQLDatabase creates a new MySQL database instance
+func NewMySQLDatabase() *MySQLDatabase {
+	return &MySQLDatabase{}
+}
+
+// Connect establishes a connection to the MySQL database
+func (m *MySQLDatabase) Connect() error {
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
 		viper.GetString(constants.DB_USER),
 		viper.GetString(constants.DB_PASSWORD),
@@ -30,44 +41,71 @@ func InitDatabase() {
 		viper.GetString(constants.DB_NAME),
 	)
 
-	// Retry logic to wait for the database to be ready
+	var err error
 	for retries := 5; retries > 0; retries-- {
-		db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
+		m.DB, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 		if err == nil {
-			// Ping the database to check if it's connected
-			sqlDB, err = db.DB()
+			sqlDB, err := m.DB.DB()
 			if err == nil {
-				err = sqlDB.Ping()
+				if err = sqlDB.Ping(); err != nil {
+					continue
+				}
 			}
 		}
 
 		if err == nil {
 			logger.WriteLog(logger.LogLevelInfo, "Connected to the database successfully")
-			return
+			return nil
 		}
 
 		logger.WriteLog(logger.LogLevelError, "Failed to connect to database: %#v Retrying in 5 seconds... (%d retries left)", err, retries)
 		time.Sleep(5 * time.Second)
 	}
 
-	logger.WriteLog(logger.LogLevelFatal, "Failed to connect to database after retries: %v", err)
+	return fmt.Errorf("failed to connect to database after retries: %v", err)
+}
+
+// GetConnection returns the database connection
+func (m *MySQLDatabase) GetConnection() *gorm.DB {
+	if os.Getenv("ENV") == "local" {
+		return m.DB.Debug()
+	}
+	return m.DB
+}
+
+// Close closes the database connection
+func (m *MySQLDatabase) Close() error {
+	if m.DB != nil {
+		sqlDB, err := m.DB.DB()
+		if err != nil {
+			return err
+		}
+		return sqlDB.Close()
+	}
+	return nil
+}
+
+// DatabaseManager manages the database connection
+type DatabaseManager struct {
+	db Database
+}
+
+// NewDatabaseManager creates a new database manager
+func NewDatabaseManager(db Database) *DatabaseManager {
+	return &DatabaseManager{db: db}
+}
+
+// Initialize initializes the database connection
+func (dm *DatabaseManager) Initialize() error {
+	return dm.db.Connect()
 }
 
 // GetDB returns the database connection
-func GetDB() *gorm.DB {
-	if os.Getenv("ENV") == "local" {
-		return db.Debug()
-	}
-
-	return db
+func (dm *DatabaseManager) GetDB() *gorm.DB {
+	return dm.db.GetConnection()
 }
 
-// SetDB sets the database instance - used for testing
-func SetDB(instance *gorm.DB) {
-	db = instance
-}
-
-// SetTestDB sets a test database instance - used for testing with sqlmock
+// SetTestDB sets a test database instance
 func SetTestDB(sqlDB *sql.DB) {
 	gormDB, err := gorm.Open(mysql.New(mysql.Config{
 		Conn:                      sqlDB,
@@ -78,5 +116,8 @@ func SetTestDB(sqlDB *sql.DB) {
 		panic(fmt.Sprintf("Error creating test DB instance: %v", err))
 	}
 
-	db = gormDB
+	// Create a new MySQLDatabase instance for testing
+	mysqlDB := &MySQLDatabase{DB: gormDB}
+	manager := NewDatabaseManager(mysqlDB)
+	manager.Initialize()
 }

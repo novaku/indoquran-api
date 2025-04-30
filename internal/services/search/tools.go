@@ -33,7 +33,7 @@ func buildSQLLikeClause(input string) string {
 // querySearch performs the search query on the database.
 func queryTotalCount(searchTerm string, juz, surat int) (int64, error) {
 	var (
-		dbClient          = database.GetDB()
+		dbClient          = database.NewMySQLDatabase().GetConnection()
 		querySessionCount *gorm.DB
 		totalCount        int64
 		err               error
@@ -60,7 +60,7 @@ func queryTotalCount(searchTerm string, juz, surat int) (int64, error) {
 // querySearch performs the search query on the database.
 func querySearch(searchTerm string, limit, offset, juz, surat int) ([]*model.AyatDetail, error) {
 	var (
-		dbClient     = database.GetDB()
+		dbClient     = database.NewMySQLDatabase().GetConnection()
 		querySession *gorm.DB
 		results      []*model.AyatDetail
 		err          error
@@ -97,7 +97,7 @@ func querySearch(searchTerm string, limit, offset, juz, surat int) ([]*model.Aya
 // queryAggregate performs the aggregate query on the database.
 func queryAggregate(searchTerm string, juz, surat int) []*model.CountResult {
 	var (
-		dbClient   = database.GetDB()
+		dbClient   = database.NewMySQLDatabase().GetConnection()
 		queryParts []string
 		count      []*model.CountResult
 	)

@@ -2,6 +2,8 @@
 
 Welcome to the IndoQuran API project. This API provides access to Quranic content, including search functionality, surah listings, and detailed ayah information.
 
+**Design Principle:** This codebase is developed following the [SOLID principles](https://en.wikipedia.org/wiki/SOLID), a set of best practices for object-oriented design that improve maintainability, scalability, and testability. Learn more about SOLID here: [SOLID (object-oriented design)](https://en.wikipedia.org/wiki/SOLID).
+
 ## Features
 
 - Search Quranic content with pagination and filtering
@@ -307,4 +309,4 @@ indoquran/
 - Contains the main server initialization and configuration
 - Handles startup procedures and dependency injection
 
-This structure enables clean separation of concerns, making the codebase maintainable and scalable. Each directory serves a specific purpose, following Go's standard project layout patterns and best practices.
+This structure enables clean separation of concerns, making the codebase maintainable and scalable. Each directory serves a specific purpose, following Go's standard project layout patterns and best practices. The codebase also adheres to the [SOLID principles](https://en.wikipedia.org/wiki/SOLID) to ensure robust and flexible software architecture.

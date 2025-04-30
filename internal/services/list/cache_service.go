@@ -13,7 +13,11 @@ type redisCacheService struct {
 
 func NewRedisCacheService() CacheService {
 	return &redisCacheService{
-		client: cache.GetRedis(),
+		client: redis.NewClient(&redis.Options{
+			Addr:     cache.NewRedisConfig().GetAddress(),
+			Password: cache.NewRedisConfig().GetPassword(),
+			DB:       cache.NewRedisConfig().GetDB(),
+		}),
 	}
 }
 

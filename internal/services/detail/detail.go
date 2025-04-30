@@ -55,14 +55,18 @@ func NewDetailService(cacheService CacheServiceInterface, databaseService Databa
 // NewRedisCacheService creates a new instance of RedisCacheService
 func NewRedisCacheService() CacheServiceInterface {
 	return &RedisCacheService{
-		client: cache.GetRedis(),
+		client: redis.NewClient(&redis.Options{
+			Addr:     cache.NewRedisConfig().GetAddress(),
+			Password: cache.NewRedisConfig().GetPassword(),
+			DB:       cache.NewRedisConfig().GetDB(),
+		}),
 	}
 }
 
 // NewGormDatabaseService creates a new instance of GormDatabaseService
 func NewGormDatabaseService() DatabaseServiceInterface {
 	return &GormDatabaseService{
-		db: database.GetDB(),
+		db: database.NewMySQLDatabase().GetConnection(),
 	}
 }
 

@@ -43,7 +43,7 @@ func TestList_GetSuratList(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockSurat := new(MockSuratService)
-	listController := &ListController{suratService: mockSurat}
+	listController := &List{suratService: mockSurat}
 
 	tests := []struct {
 		name           string
@@ -134,7 +134,7 @@ func TestList_GetAyatList(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
 	mockAyat := new(MockAyatService)
-	listController := &ListController{ayatService: mockAyat}
+	listController := &List{ayatService: mockAyat}
 
 	tests := []struct {
 		name           string

@@ -84,10 +84,9 @@ func TestLoggingMiddleware(t *testing.T) {
 	}), &gorm.Config{})
 	assert.NoError(t, err)
 
-	// Save original DB and restore after test
-	originalDB := database.GetDB()
-	database.SetDB(gormDB)
-	defer database.SetDB(originalDB)
+	// Create database manager with mock DB
+	mysqlDB := &database.MySQLDatabase{DB: gormDB}
+	dbManager := database.NewDatabaseManager(mysqlDB)
 
 	tests := []struct {
 		name           string
@@ -132,7 +131,7 @@ func TestLoggingMiddleware(t *testing.T) {
 			logger, err := zap.NewProduction()
 			assert.NoError(t, err)
 			defer logger.Sync()
-			router.Use(LoggingMiddleware(gormDB, logger))
+			router.Use(LoggingMiddleware(dbManager.GetDB(), logger))
 
 			// Add test endpoint
 			router.Any("/api/test", func(c *gin.Context) {

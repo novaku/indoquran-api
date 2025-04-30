@@ -64,12 +64,12 @@ func TestInitRedis(t *testing.T) {
 
 			if !tt.shouldFail {
 				InitRedis()
-				assert.NotNil(t, redisClient)
+				client := GetRedis()
+				assert.NotNil(t, client)
 
 				// Verify connection
-				pong, err := redisClient.Ping().Result()
+				err := client.Ping()
 				assert.NoError(t, err)
-				assert.Equal(t, "PONG", pong)
 			} else {
 				assert.Panics(t, func() {
 					InitRedis()
@@ -106,7 +106,7 @@ func TestGetRedis(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Reset redis client before each test
-			redisClient = nil
+			// redisClient = nil
 
 			if tt.setupRedis {
 				viper.Set("REDIS_HOST", "localhost")
@@ -122,9 +122,8 @@ func TestGetRedis(t *testing.T) {
 				assert.Nil(t, result)
 			} else {
 				assert.NotNil(t, result)
-				pong, err := result.Ping().Result()
+				err := result.Ping()
 				assert.NoError(t, err)
-				assert.Equal(t, "PONG", pong)
 			}
 		})
 	}

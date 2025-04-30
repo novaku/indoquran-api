@@ -12,6 +12,6 @@ type gormDatabaseService struct {
 
 func NewGormDatabaseService() DatabaseService {
 	return &gormDatabaseService{
-		db: database.GetDB(),
+		db: database.NewMySQLDatabase().GetConnection(),
 	}
 }
