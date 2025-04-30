@@ -1,18 +1,36 @@
 package model
 
+import (
+	"gorm.io/gorm"
+)
+
+// QuranAyat represents a row in the quran_ayat table
 type QuranAyat struct {
-	AyatKey    string  `gorm:"primaryKey;size:7;not null"`
-	AyatNumber int     `gorm:"not null"`
-	Surat      int     `gorm:"default:0;not null"`
-	Ayat       int     `gorm:"default:0;not null"`
-	Text       string  `gorm:"type:text;not null"`
-	Simple     *string `gorm:"type:text"`     // Nullable
-	Juz        *int    `gorm:"type:smallint"` // Nullable
-	Hezb       *int    `gorm:"type:smallint"` // Nullable
-	Page       *int    `gorm:"type:smallint"` // Nullable
-	Rub        *int    `gorm:"default:NULL"`  // Nullable
+	gorm.Model
+	Surat      int     `json:"surat"`
+	Ayat       int     `json:"ayat"`
+	Text       string  `json:"text"`
+	Simple     *string `json:"simple,omitempty"`
+	AyatKey    string  `json:"ayat_key"`
+	AyatNumber int     `json:"ayat_number"`
 }
 
-func (QuranAyat) TableName() string {
-	return "quran_ayat"
+// GetAyat retrieves a specific ayat by surat and ayat number
+func GetAyat(db *gorm.DB, suratID, ayatNumber int) (*QuranAyat, error) {
+	var ayat QuranAyat
+	result := db.Where("surat = ? AND ayat = ?", suratID, ayatNumber).First(&ayat)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return &ayat, nil
+}
+
+// GetAyatInSurat retrieves all ayat in a specific surat
+func GetAyatInSurat(db *gorm.DB, suratID int) ([]QuranAyat, error) {
+	var ayats []QuranAyat
+	result := db.Where("surat = ?", suratID).Find(&ayats)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return ayats, nil
 }

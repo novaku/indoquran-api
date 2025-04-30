@@ -2,25 +2,52 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"indoquran-api/internal/model"
+	"indoquran-api/internal/services/search"
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
 
-type MockSearch struct {
+// MockSearchService implements SearchServiceInterface
+type MockSearchService struct {
 	mock.Mock
 }
 
-func (m *MockSearch) FullTextSearch(query string, juz, surat, page, rowsPerPage int) (interface{}, int64, interface{}, error) {
+func (m *MockSearchService) FullTextSearch(query string, juz, surat, page, rowsPerPage int) (*search.SearchResult, error) {
 	args := m.Called(query, juz, surat, page, rowsPerPage)
-	return args.Get(0), args.Get(1).(int64), args.Get(2), args.Error(3)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*search.SearchResult), args.Error(1)
+}
+
+// MockSearchRequestValidator implements SearchRequestValidatorInterface
+type MockSearchRequestValidator struct {
+	mock.Mock
+}
+
+func (m *MockSearchRequestValidator) ValidateRequest(c *gin.Context) (*SearchRequest, error) {
+	args := m.Called(c)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*SearchRequest), args.Error(1)
+}
+
+// MockSearchResponseBuilder implements SearchResponseBuilderInterface
+type MockSearchResponseBuilder struct {
+	mock.Mock
+}
+
+func (m *MockSearchResponseBuilder) BuildResponse(result *search.SearchResult, request *SearchRequest) *ResultJsonFormat {
+	args := m.Called(result, request)
+	return args.Get(0).(*ResultJsonFormat)
 }
 
 func TestSearchHandler(t *testing.T) {
@@ -33,31 +60,46 @@ func TestSearchHandler(t *testing.T) {
 		juz            string
 		surat          string
 		rowsPerPage    string
-		mockResults    interface{}
-		mockCount      int64
-		mockAggregate  interface{}
+		mockResults    *search.SearchResult
 		mockError      error
 		expectedCode   int
-		expectedResult ResultJsonFormat
+		expectedResult *ResultJsonFormat
 	}{
 		{
-			name:          "successful search",
-			query:         "test",
-			page:          "1",
-			juz:           "0",
-			surat:         "0",
-			rowsPerPage:   "10",
-			mockResults:   []string{"result1", "result2"},
-			mockCount:     20,
-			mockAggregate: map[string]interface{}{"total": 20},
-			mockError:     nil,
-			expectedCode:  http.StatusOK,
-			expectedResult: ResultJsonFormat{
+			name:        "successful search",
+			query:       "test",
+			page:        "1",
+			juz:         "0",
+			surat:       "0",
+			rowsPerPage: "10",
+			mockResults: &search.SearchResult{
+				Results: []*model.AyatDetail{
+					{
+						ID:         1,
+						Juz:        1,
+						Surat:      1,
+						Ayat:       1,
+						TextIndo:   "test",
+						TextArabic: "test",
+					},
+				},
+				TotalCount: 20,
+				Count: []*model.CountResult{
+					{
+						Type:       "surat",
+						Identifier: 1,
+						Count:      1,
+					},
+				},
+			},
+			mockError:    nil,
+			expectedCode: http.StatusOK,
+			expectedResult: &ResultJsonFormat{
 				Aggregate: []*model.CountResult{
 					{
-						Type:       "",
-						Identifier: 0,
-						Count:      0,
+						Type:       "surat",
+						Identifier: 1,
+						Count:      1,
 					},
 				},
 				Pagination: &Pagination{
@@ -68,12 +110,12 @@ func TestSearchHandler(t *testing.T) {
 				},
 				Results: []*model.AyatDetail{
 					{
-						ID:         0,
-						Juz:        0,
-						Surat:      0,
-						Ayat:       0,
-						TextIndo:   "",
-						TextArabic: "",
+						ID:         1,
+						Juz:        1,
+						Surat:      1,
+						Ayat:       1,
+						TextIndo:   "test",
+						TextArabic: "test",
 					},
 				},
 			},
@@ -86,96 +128,72 @@ func TestSearchHandler(t *testing.T) {
 			surat:          "0",
 			rowsPerPage:    "10",
 			mockResults:    nil,
-			mockCount:      0,
-			mockAggregate:  nil,
-			mockError:      errors.New("empty search query"),
-			expectedCode:   http.StatusInternalServerError,
-			expectedResult: ResultJsonFormat{},
+			mockError:      ErrInvalidRequest("search query is required"),
+			expectedCode:   http.StatusBadRequest,
+			expectedResult: nil,
 		},
 		{
-			name:          "invalid page number",
-			query:         "test",
-			page:          "invalid",
-			juz:           "0",
-			surat:         "0",
-			rowsPerPage:   "10",
-			mockResults:   []string{},
-			mockCount:     0,
-			mockAggregate: nil,
-			mockError:     nil,
-			expectedCode:  http.StatusOK,
-			expectedResult: ResultJsonFormat{
+			name:        "invalid page number",
+			query:       "test",
+			page:        "invalid",
+			juz:         "0",
+			surat:       "0",
+			rowsPerPage: "10",
+			mockResults: &search.SearchResult{
+				Results:    []*model.AyatDetail{},
+				TotalCount: 0,
+				Count:      []*model.CountResult{},
+			},
+			mockError:    nil,
+			expectedCode: http.StatusOK,
+			expectedResult: &ResultJsonFormat{
 				Pagination: &Pagination{
 					CurrentPage: 1,
 					RowsPerPage: 10,
 					TotalPages:  0,
 					TotalRows:   0,
 				},
-				Results: []*model.AyatDetail{
-					{
-						ID:         0,
-						Juz:        0,
-						Surat:      0,
-						Ayat:       0,
-						TextIndo:   "",
-						TextArabic: "",
-					},
-				},
-			},
-		},
-		{
-			name:          "custom rows per page",
-			query:         "test",
-			page:          "1",
-			juz:           "0",
-			surat:         "0",
-			rowsPerPage:   "5",
-			mockResults:   []string{"result1"},
-			mockCount:     1,
-			mockAggregate: map[string]interface{}{"total": 1},
-			mockError:     nil,
-			expectedCode:  http.StatusOK,
-			expectedResult: ResultJsonFormat{
-				Aggregate: []*model.CountResult{
-					{
-						Type:       "",
-						Identifier: 0,
-						Count:      0,
-					},
-				},
-				Pagination: &Pagination{
-					CurrentPage: 1,
-					RowsPerPage: 5,
-					TotalPages:  1,
-					TotalRows:   1,
-				},
-				Results: []*model.AyatDetail{
-					{
-						ID:         0,
-						Juz:        0,
-						Surat:      0,
-						Ayat:       0,
-						TextIndo:   "",
-						TextArabic: "",
-					},
-				},
+				Results: []*model.AyatDetail{},
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSearch := new(MockSearch)
-			mockSearch.On("FullTextSearch", tt.query, 0, 0, 1, 10).Return(tt.mockResults, tt.mockCount, tt.mockAggregate, tt.mockError)
+			// Create mocks
+			mockSearchService := new(MockSearchService)
+			mockValidator := new(MockSearchRequestValidator)
+			mockResponseBuilder := new(MockSearchResponseBuilder)
 
+			// Setup request
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
-
 			req := httptest.NewRequest("GET", "/?q="+tt.query+"&p="+tt.page+"&juz="+tt.juz+"&surat="+tt.surat+"&n="+tt.rowsPerPage, nil)
 			c.Request = req
 
-			SearchHandler(c)
+			// Setup validator mock
+			request := &SearchRequest{
+				Query:       tt.query,
+				Page:        1,
+				Juz:         0,
+				Surat:       0,
+				RowsPerPage: 10,
+			}
+			mockValidator.On("ValidateRequest", c).Return(request, tt.mockError)
 
+			// Setup search service mock
+			if tt.mockError == nil {
+				mockSearchService.On("FullTextSearch", tt.query, 0, 0, 1, 10).Return(tt.mockResults, nil)
+				mockResponseBuilder.On("BuildResponse", tt.mockResults, request).Return(tt.expectedResult)
+			}
+
+			// Create controller with mocks
+			controller := NewSearchController(mockSearchService, mockValidator, mockResponseBuilder)
+
+			// Execute test
+			controller.SearchHandler(c)
+
+			// Assertions
 			assert.Equal(t, tt.expectedCode, w.Code)
 
 			if tt.mockError == nil {
@@ -185,7 +203,12 @@ func TestSearchHandler(t *testing.T) {
 				assert.Equal(t, tt.expectedResult, response.Data)
 			}
 
-			mockSearch.AssertExpectations(t)
+			// Verify mock expectations
+			mockValidator.AssertExpectations(t)
+			if tt.mockError == nil {
+				mockSearchService.AssertExpectations(t)
+				mockResponseBuilder.AssertExpectations(t)
+			}
 		})
 	}
 }

@@ -18,11 +18,22 @@ func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 		// Create a new request with the context
 		c.Request = c.Request.WithContext(ctx)
 
-		// Run the next handler in a goroutine and handle timeout
-		finished := make(chan struct{})
+		// Create a channel to signal completion
+		done := make(chan struct{})
+		defer close(done)
+
+		// Run the next handler in a goroutine
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					// Handle panic
+					c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+						"error": "Internal server error",
+					})
+				}
+				done <- struct{}{}
+			}()
 			c.Next()
-			finished <- struct{}{}
 		}()
 
 		select {
@@ -30,8 +41,8 @@ func TimeoutMiddleware(timeout time.Duration) gin.HandlerFunc {
 			c.AbortWithStatusJSON(http.StatusGatewayTimeout, gin.H{
 				"error": "Request timed out, please try again later.",
 			})
-		case <-finished:
-			// Everything is good
+		case <-done:
+			// Request completed successfully
 		}
 	}
 }

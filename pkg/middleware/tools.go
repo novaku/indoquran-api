@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -16,36 +17,24 @@ type customResponseWriter struct {
 
 // Get the full URL of the request
 func getFullURL(c *gin.Context) string {
-	req := c.Request
-	protocol := "http"
-	if req.TLS != nil {
-		protocol = "https"
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
 	}
-	// Construct the full URL
-	return fmt.Sprintf("%s://%s%s", protocol, req.Host, req.RequestURI)
+	return fmt.Sprintf("%s://%s%s", scheme, c.Request.Host, c.Request.RequestURI)
 }
 
 // Format duration for logging
 func formatDuration(d time.Duration) string {
-	if d < time.Millisecond {
-		return fmt.Sprintf("%d nanoseconds", d.Nanoseconds())
-	} else if d < time.Second {
-		if d < time.Microsecond {
-			return fmt.Sprintf("%d nanoseconds", d.Nanoseconds())
-		}
-		if d < time.Millisecond {
-			return fmt.Sprintf("%d microseconds", d.Microseconds())
-		}
-		return fmt.Sprintf("%d milliseconds", d.Milliseconds())
-	} else if d < time.Minute {
-		return fmt.Sprintf("%d seconds", int64(d.Seconds()))
-	} else if d < time.Hour {
-		return fmt.Sprintf("%d minutes", int64(d.Minutes()))
-	} else if d < 24*time.Hour {
-		return fmt.Sprintf("%d hours", int64(d.Hours()))
-	} else {
-		return fmt.Sprintf("%d days", int64(d.Hours()/24))
-	}
+	s := d.String()
+
+	// Simplify duration format by removing trailing zero minutes and seconds
+	s = strings.ReplaceAll(s, "h0m0s", "h")
+	s = strings.ReplaceAll(s, "m0s", "m")
+	s = strings.ReplaceAll(s, "µs0", "µs")
+	s = strings.ReplaceAll(s, "ms0", "ms")
+
+	return s
 }
 
 // Implement Write method to capture response body

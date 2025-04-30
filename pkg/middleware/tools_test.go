@@ -74,6 +74,7 @@ func TestGetFullURL(t *testing.T) {
 		})
 	}
 }
+
 func TestFormatDuration(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -83,62 +84,62 @@ func TestFormatDuration(t *testing.T) {
 		{
 			name:     "500 nanoseconds",
 			duration: 500 * time.Nanosecond,
-			expected: "500 nanoseconds",
+			expected: "500ns",
 		},
 		{
 			name:     "2 microseconds",
 			duration: 2 * time.Microsecond,
-			expected: "2 microseconds",
+			expected: "2µs",
 		},
 		{
 			name:     "800 milliseconds",
 			duration: 800 * time.Millisecond,
-			expected: "800 milliseconds",
+			expected: "800ms",
 		},
 		{
 			name:     "30 seconds",
 			duration: 30 * time.Second,
-			expected: "30 seconds",
+			expected: "30s",
 		},
 		{
 			name:     "45 minutes",
 			duration: 45 * time.Minute,
-			expected: "45 minutes",
+			expected: "45m",
 		},
 		{
 			name:     "3 hours",
 			duration: 3 * time.Hour,
-			expected: "3 hours",
+			expected: "3h",
 		},
 		{
 			name:     "5 days",
 			duration: 5 * 24 * time.Hour,
-			expected: "5 days",
+			expected: "120h",
 		},
 		{
 			name:     "zero duration",
 			duration: 0,
-			expected: "0 nanoseconds",
+			expected: "0s",
 		},
 		{
 			name:     "negative duration",
 			duration: -5 * time.Second,
-			expected: "-5 seconds",
+			expected: "-5s",
 		},
 		{
 			name:     "boundary between microseconds and milliseconds",
 			duration: 999 * time.Microsecond,
-			expected: "999 microseconds",
+			expected: "999µs",
 		},
 		{
 			name:     "boundary between hours and days",
 			duration: 23 * time.Hour,
-			expected: "23 hours",
+			expected: "23h",
 		},
 		{
-			name:     "large number of days",
+			name:     "large number of hours",
 			duration: 365 * 24 * time.Hour,
-			expected: "365 days",
+			expected: "8760h",
 		},
 	}
 

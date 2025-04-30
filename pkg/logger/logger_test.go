@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"log"
 	"os"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -20,41 +21,46 @@ func TestWriteLog(t *testing.T) {
 		name          string
 		level         string
 		format        string
-		args          []interface{}
-		expectedPanic bool
-		expectedLog   string
+		args          []any
+		expectPanic   bool
+		expectedLevel string
+		expectedMsg   string
 	}{
 		{
 			name:          "Info level logging",
-			level:         "INFO",
+			level:         LogLevelInfo,
 			format:        "test message %s",
-			args:          []interface{}{"data"},
-			expectedPanic: false,
-			expectedLog:   "[level:INFO] test message data",
+			args:          []any{"data"},
+			expectPanic:   false,
+			expectedLevel: "info",
+			expectedMsg:   "test message data",
 		},
 		{
 			name:          "Error level logging",
-			level:         "ERROR",
+			level:         LogLevelError,
 			format:        "error occurred: %d",
-			args:          []interface{}{404},
-			expectedPanic: false,
-			expectedLog:   "[level:ERROR] error occurred: 404",
+			args:          []any{404},
+			expectPanic:   false,
+			expectedLevel: "error",
+			expectedMsg:   "error occurred: 404",
 		},
 		{
 			name:          "Fatal level logging triggers panic",
 			level:         LogLevelFatal,
 			format:        "fatal error: %s",
-			args:          []interface{}{"system crash"},
-			expectedPanic: true,
-			expectedLog:   "[level:FATAL] fatal error: system crash",
+			args:          []any{"system crash"},
+			expectPanic:   true,
+			expectedLevel: "fatal",
+			expectedMsg:   "fatal error: system crash",
 		},
 		{
 			name:          "Empty format string",
-			level:         "INFO",
+			level:         LogLevelInfo,
 			format:        "",
-			args:          []interface{}{},
-			expectedPanic: false,
-			expectedLog:   "[level:INFO] ",
+			args:          []any{},
+			expectPanic:   false,
+			expectedLevel: "info",
+			expectedMsg:   "",
 		},
 	}
 
@@ -62,7 +68,7 @@ func TestWriteLog(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			buf.Reset()
 
-			if tt.expectedPanic {
+			if tt.expectPanic {
 				assert.Panics(t, func() {
 					WriteLog(tt.level, tt.format, tt.args...)
 				})
@@ -71,8 +77,13 @@ func TestWriteLog(t *testing.T) {
 			}
 
 			logOutput := buf.String()
-			assert.Contains(t, logOutput, tt.expectedLog)
+			assert.Contains(t, logOutput, "[level:"+tt.expectedLevel+"]")
+			assert.Contains(t, logOutput, tt.expectedMsg)
 			assert.Contains(t, logOutput, "logger_test.go")
+
+			// Additional check to verify log structure
+			logParts := strings.SplitN(logOutput, "] ", 3)
+			assert.Equal(t, 3, len(logParts), "Log should have three parts: timestamp, file location, and message")
 		})
 	}
 }

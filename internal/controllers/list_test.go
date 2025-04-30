@@ -2,10 +2,11 @@ package controllers
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"indoquran-api/internal/model"
+	"indoquran-api/internal/services/list"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 
 	"github.com/gin-gonic/gin"
@@ -13,210 +14,213 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-type MockSurat struct {
+// MockSuratService implements list.SuratService
+type MockSuratService struct {
 	mock.Mock
 }
 
-func (m *MockSurat) GetSuratList(id string) (interface{}, error) {
-	args := m.Called(id)
-	return args.Get(0), args.Error(1)
+func (m *MockSuratService) GetSuratList(suratID string) ([]model.IdMuntakhab, error) {
+	args := m.Called(suratID)
+	return args.Get(0).([]model.IdMuntakhab), args.Error(1)
 }
 
-func TestListSurat(t *testing.T) {
+// MockAyatService implements list.AyatService
+type MockAyatService struct {
+	mock.Mock
+}
+
+func (m *MockAyatService) GetAyatList(suratID string, page, pageSize int) ([]*model.AyatDetail, error) {
+	args := m.Called(suratID, page, pageSize)
+	return args.Get(0).([]*model.AyatDetail), args.Error(1)
+}
+
+var (
+	originalNewSurat = list.NewSurat
+	originalNewAyat  = list.NewAyat
+)
+
+func TestList_GetSuratList(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	mockSurat := new(MockSuratService)
+	listController := &ListController{suratService: mockSurat}
+
 	tests := []struct {
-		name         string
-		suratID      string
-		mockResponse interface{}
-		mockError    error
-		expectedCode int
+		name           string
+		suratID        string
+		mockSetup      func(*MockSuratService)
+		expectedStatus int
+		expectedBody   interface{}
 	}{
 		{
-			name:         "success get all surats",
-			suratID:      "",
-			mockResponse: []map[string]string{{"id": "1", "name": "Al-Fatihah"}},
-			mockError:    nil,
-			expectedCode: http.StatusOK,
+			name:    "Success - Get all surats",
+			suratID: "",
+			mockSetup: func(ms *MockSuratService) {
+				ms.On("GetSuratList", "").Return([]model.IdMuntakhab{
+					{Index: 1, Surat: 1, Ayat: 7, Text: "Al-Fatihah"},
+					{Index: 2, Surat: 2, Ayat: 286, Text: "Al-Baqarah"},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: gin.H{
+				"status":  "success",
+				"message": "Get surat list successfully",
+				"data": []model.IdMuntakhab{
+					{Index: 1, Surat: 1, Ayat: 7, Text: "Al-Fatihah"},
+					{Index: 2, Surat: 2, Ayat: 286, Text: "Al-Baqarah"},
+				},
+			},
 		},
 		{
-			name:         "success get specific surat",
-			suratID:      "1",
-			mockResponse: map[string]string{"id": "1", "name": "Al-Fatihah"},
-			mockError:    nil,
-			expectedCode: http.StatusOK,
+			name:    "Success - Get specific surat",
+			suratID: "1",
+			mockSetup: func(ms *MockSuratService) {
+				ms.On("GetSuratList", "1").Return([]model.IdMuntakhab{
+					{Index: 1, Surat: 1, Ayat: 7, Text: "Al-Fatihah"},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: gin.H{
+				"status":  "success",
+				"message": "Get surat list successfully",
+				"data": []model.IdMuntakhab{
+					{Index: 1, Surat: 1, Ayat: 7, Text: "Al-Fatihah"},
+				},
+			},
 		},
 		{
-			name:         "invalid surat id",
-			suratID:      "invalid",
-			mockResponse: nil,
-			mockError:    errors.New("surat not found"),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			name:         "server error",
-			suratID:      "",
-			mockResponse: nil,
-			mockError:    errors.New("internal server error"),
-			expectedCode: http.StatusBadRequest,
+			name:    "Error - Invalid surat ID",
+			suratID: "invalid",
+			mockSetup: func(ms *MockSuratService) {
+				ms.On("GetSuratList", "invalid").Return([]model.IdMuntakhab{}, fmt.Errorf("invalid surat ID"))
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: gin.H{
+				"status":  "error",
+				"message": "invalid surat ID",
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockSurat := new(MockSurat)
-			mockSurat.On("GetSuratList", tt.suratID).Return(tt.mockResponse, tt.mockError)
+			tt.mockSetup(mockSurat)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
 			if tt.suratID != "" {
-				c.Request, _ = http.NewRequest(http.MethodGet, "/?surat="+tt.suratID, nil)
-			} else {
-				c.Request, _ = http.NewRequest(http.MethodGet, "/", nil)
+				c.Params = append(c.Params, gin.Param{Key: "suratId", Value: tt.suratID})
 			}
 
-			ListSurat(c)
+			listController.GetSuratList(c)
 
-			assert.Equal(t, tt.expectedCode, w.Code)
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			var response Response
-			err := json.NewDecoder(w.Body).Decode(&response)
+			var response map[string]interface{}
+			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 
-			if tt.mockError != nil {
-				assert.Equal(t, tt.mockError.Error(), response.Error)
-				assert.Nil(t, response.Data)
-			} else {
-				assert.Equal(t, tt.mockResponse, response.Data)
-				assert.Empty(t, response.Error)
-			}
+			expectedBody, _ := json.Marshal(tt.expectedBody)
+			actualBody, _ := json.Marshal(response)
+			assert.JSONEq(t, string(expectedBody), string(actualBody))
 
 			mockSurat.AssertExpectations(t)
 		})
 	}
 }
 
-type MockAyat struct {
-	mock.Mock
-}
-
-func (m *MockAyat) GetAyatList(suratID string, page int, pageSize int) (interface{}, error) {
-	args := m.Called(suratID, page, pageSize)
-	return args.Get(0), args.Error(1)
-}
-
-func TestListAyatInSurat(t *testing.T) {
+func TestList_GetAyatList(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 
+	mockAyat := new(MockAyatService)
+	listController := &ListController{ayatService: mockAyat}
+
 	tests := []struct {
-		name         string
-		suratID      string
-		page         string
-		pageSize     string
-		mockResponse interface{}
-		mockError    error
-		expectedCode int
+		name           string
+		suratID        string
+		page           string
+		pageSize       string
+		mockSetup      func(*MockAyatService)
+		expectedStatus int
+		expectedBody   interface{}
 	}{
 		{
-			name:         "success get ayat list with default pagination",
-			suratID:      "1",
-			page:         "",
-			pageSize:     "",
-			mockResponse: []map[string]string{{"number": "1", "text": "bismillah"}},
-			mockError:    nil,
-			expectedCode: http.StatusOK,
+			name:     "Success - Get ayat list",
+			suratID:  "1",
+			page:     "1",
+			pageSize: "10",
+			mockSetup: func(ma *MockAyatService) {
+				ma.On("GetAyatList", "1", 1, 10).Return([]model.QuranAyat{
+					{
+						AyatKey:    "0001001",
+						AyatNumber: 1,
+						Surat:      1,
+						Ayat:       1,
+						Text:       "بِسْمِ ٱللَّهِ",
+						Simple:     stringPtr("Dengan nama Allah"),
+					},
+				}, nil)
+			},
+			expectedStatus: http.StatusOK,
+			expectedBody: gin.H{
+				"status":  "success",
+				"message": "Get ayat list successfully",
+				"data": []model.QuranAyat{
+					{
+						AyatKey:    "0001001",
+						AyatNumber: 1,
+						Surat:      1,
+						Ayat:       1,
+						Text:       "بِسْمِ ٱللَّهِ",
+						Simple:     stringPtr("Dengan nama Allah"),
+					},
+				},
+			},
 		},
 		{
-			name:         "success get ayat list with custom pagination",
-			suratID:      "1",
-			page:         "2",
-			pageSize:     "5",
-			mockResponse: []map[string]string{{"number": "6", "text": "sample"}},
-			mockError:    nil,
-			expectedCode: http.StatusOK,
-		},
-		{
-			name:         "invalid surat id",
-			suratID:      "999",
-			page:         "1",
-			pageSize:     "10",
-			mockResponse: nil,
-			mockError:    errors.New("surat not found"),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			name:         "negative page number",
-			suratID:      "1",
-			page:         "-1",
-			pageSize:     "10",
-			mockResponse: nil,
-			mockError:    errors.New("invalid page number"),
-			expectedCode: http.StatusBadRequest,
-		},
-		{
-			name:         "zero page size",
-			suratID:      "1",
-			page:         "1",
-			pageSize:     "0",
-			mockResponse: nil,
-			mockError:    errors.New("invalid page size"),
-			expectedCode: http.StatusBadRequest,
+			name:     "Error - Invalid surat ID",
+			suratID:  "invalid",
+			page:     "1",
+			pageSize: "10",
+			mockSetup: func(ma *MockAyatService) {
+				ma.On("GetAyatList", "invalid", 1, 10).Return([]model.QuranAyat{}, fmt.Errorf("invalid surat ID"))
+			},
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: gin.H{
+				"status":  "error",
+				"message": "invalid surat ID",
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockAyat := new(MockAyat)
-
-			expectedPage := 1
-			if tt.page != "" {
-				expectedPage, _ = strconv.Atoi(tt.page)
-			}
-
-			expectedPageSize := 10
-			if tt.pageSize != "" {
-				expectedPageSize, _ = strconv.Atoi(tt.pageSize)
-			}
-
-			mockAyat.On("GetAyatList", tt.suratID, expectedPage, expectedPageSize).Return(tt.mockResponse, tt.mockError)
+			tt.mockSetup(mockAyat)
 
 			w := httptest.NewRecorder()
 			c, _ := gin.CreateTestContext(w)
 
-			url := "/surat/" + tt.suratID
-			if tt.page != "" {
-				url += "?p=" + tt.page
-			}
-			if tt.pageSize != "" {
-				if tt.page != "" {
-					url += "&"
-				} else {
-					url += "?"
-				}
-				url += "n=" + tt.pageSize
-			}
+			c.Params = append(c.Params, gin.Param{Key: "suratId", Value: tt.suratID})
+			c.Request = httptest.NewRequest("GET", "/?page="+tt.page+"&pageSize="+tt.pageSize, nil)
 
-			c.Request, _ = http.NewRequest(http.MethodGet, url, nil)
-			c.Params = []gin.Param{{Key: "id", Value: tt.suratID}}
+			listController.GetAyatList(c)
 
-			ListAyatInSurat(c)
+			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			assert.Equal(t, tt.expectedCode, w.Code)
-
-			var response Response
-			err := json.NewDecoder(w.Body).Decode(&response)
+			var response map[string]interface{}
+			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 
-			if tt.mockError != nil {
-				assert.Equal(t, tt.mockError.Error(), response.Error)
-				assert.Nil(t, response.Data)
-			} else {
-				assert.Equal(t, tt.mockResponse, response.Data)
-				assert.Empty(t, response.Error)
-			}
+			expectedBody, _ := json.Marshal(tt.expectedBody)
+			actualBody, _ := json.Marshal(response)
+			assert.JSONEq(t, string(expectedBody), string(actualBody))
 
 			mockAyat.AssertExpectations(t)
 		})
 	}
+}
+
+func stringPtr(s string) *string {
+	return &s
 }

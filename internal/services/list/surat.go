@@ -2,21 +2,31 @@ package list
 
 import (
 	"encoding/json"
-	"fmt"
 	"indoquran-api/internal/model"
-	"indoquran-api/pkg/cache"
-	"indoquran-api/pkg/database"
 	"indoquran-api/pkg/logger"
 	"time"
-
-	"github.com/go-redis/redis"
-	"gorm.io/gorm"
 )
+
+// CacheService defines the interface for caching operations
+type CacheService interface {
+	Get(key string) (string, error)
+	Set(key string, value interface{}, expiration time.Duration) error
+}
+
+// DatabaseService defines the interface for database operations
+type DatabaseService interface {
+	GetSurats(suratID string) ([]model.IdMuntakhab, error)
+}
+
+// SuratService defines the interface for surat-related operations
+type SuratService interface {
+	GetSuratList(suratID string) ([]model.IdMuntakhab, error)
+}
 
 type (
 	Surat struct {
-		rds *redis.Client
-		db  *gorm.DB
+		cache    CacheService
+		database DatabaseService
 	}
 
 	ISurat interface {
@@ -24,49 +34,36 @@ type (
 	}
 )
 
-func NewSurat() ISurat {
+func NewSurat(cache CacheService, db DatabaseService) ISurat {
 	return &Surat{
-		rds: cache.GetRedis(),
-		db:  database.GetDB(),
+		cache:    cache,
+		database: db,
 	}
 }
 
 // GetSuratList retrieves a list of surat based on the provided suratID
 func (s *Surat) GetSuratList(suratID string) ([]model.IdMuntakhab, error) {
-	var (
-		surats []model.IdMuntakhab
-	)
+	var surats []model.IdMuntakhab
 
-	// Create a Redis cache key based on the suratID
-	cacheKey := "surats:all"
-	if suratID != "" {
-		cacheKey = fmt.Sprintf("surats:%s", suratID)
-	}
+	// Create a cache key based on the suratID
+	cacheKey := s.buildSuratKey(suratID)
 
-	// Try to get data from Redis cache
-	cachedData, err := s.rds.Get(cacheKey).Result()
+	// Try to get data from cache
+	cachedData, err := s.cache.Get(cacheKey)
 	if err != nil {
-		logger.WriteLog(logger.LogLevelError, "Error fetching from Redis: %#v", err)
-		querySession := s.db.Where("ayat = ?", 1).Order("surat ASC")
-		if suratID != "" {
-			querySession = querySession.Where("surat = ?", suratID)
-		}
-		result := querySession.Find(&surats)
+		logger.WriteLog(logger.LogLevelError, "Error fetching from cache: %#v", err)
 
-		if result.Error != nil {
-			logger.WriteLog(logger.LogLevelError, "Error retrieving records: %#v", result.Error)
-			return nil, result.Error
-		}
-
-		// Serialize the data and store it in Redis with an expiration
-		serializedData, err := json.Marshal(surats)
+		// If cache miss, get from database
+		surats, err = s.database.GetSurats(suratID)
 		if err != nil {
-			logger.WriteLog(logger.LogLevelError, "Error serializing records: %#v", err)
+			logger.WriteLog(logger.LogLevelError, "Error retrieving records: %#v", err)
 			return nil, err
 		}
-		err = s.rds.Set(cacheKey, serializedData, 24*time.Hour).Err() // 24-hours expiration
+
+		// Cache the results
+		err = s.cache.Set(cacheKey, surats, 24*time.Hour)
 		if err != nil {
-			logger.WriteLog(logger.LogLevelError, "Error caching data in Redis: %#v", err)
+			logger.WriteLog(logger.LogLevelError, "Error caching data: %#v", err)
 			return nil, err
 		}
 	} else {
@@ -79,4 +76,27 @@ func (s *Surat) GetSuratList(suratID string) ([]model.IdMuntakhab, error) {
 	}
 
 	return surats, nil
+}
+
+func (g *gormDatabaseService) GetSurats(suratID string) ([]model.IdMuntakhab, error) {
+	var surats []model.IdMuntakhab
+
+	querySession := g.db.Where("ayat = ?", 1).Order("surat ASC")
+	if suratID != "" {
+		querySession = querySession.Where("surat = ?", suratID)
+	}
+
+	result := querySession.Find(&surats)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+
+	return surats, nil
+}
+
+func (s *Surat) buildSuratKey(suratID string) string {
+	if suratID == "" {
+		return "surat:all"
+	}
+	return "surat:" + suratID
 }

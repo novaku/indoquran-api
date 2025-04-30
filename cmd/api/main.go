@@ -5,8 +5,7 @@ import (
 
 	v1Router "indoquran-api/api/v1"
 	"indoquran-api/internal/config"
-	"indoquran-api/pkg/cache"
-	"indoquran-api/pkg/database"
+	"indoquran-api/internal/services"
 
 	"github.com/gin-gonic/gin"
 )
@@ -15,11 +14,8 @@ func main() {
 	// Load configuration
 	config.LoadConfig()
 
-	// Initialize Redis
-	cache.InitRedis()
-
-	// Initialize the database connection
-	database.InitDatabase()
+	// Initialize all services
+	services.InitServices()
 
 	// Create a new Gin Engine
 	r := gin.Default()

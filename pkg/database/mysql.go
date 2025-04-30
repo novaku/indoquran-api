@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"indoquran-api/internal/config"
+	"indoquran-api/internal/constants"
 	"indoquran-api/pkg/logger"
 
 	"github.com/spf13/viper"
@@ -23,11 +23,11 @@ func InitDatabase() {
 		sqlDB *sql.DB
 	)
 	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
-		viper.GetString(config.DB_USER),
-		viper.GetString(config.DB_PASSWORD),
-		viper.GetString(config.DB_HOST),
-		viper.GetString(config.DB_PORT),
-		viper.GetString(config.DB_NAME),
+		viper.GetString(constants.DB_USER),
+		viper.GetString(constants.DB_PASSWORD),
+		viper.GetString(constants.DB_HOST),
+		viper.GetString(constants.DB_PORT),
+		viper.GetString(constants.DB_NAME),
 	)
 
 	// Retry logic to wait for the database to be ready
@@ -60,4 +60,23 @@ func GetDB() *gorm.DB {
 	}
 
 	return db
+}
+
+// SetDB sets the database instance - used for testing
+func SetDB(instance *gorm.DB) {
+	db = instance
+}
+
+// SetTestDB sets a test database instance - used for testing with sqlmock
+func SetTestDB(sqlDB *sql.DB) {
+	gormDB, err := gorm.Open(mysql.New(mysql.Config{
+		Conn:                      sqlDB,
+		SkipInitializeWithVersion: true,
+	}), &gorm.Config{})
+
+	if err != nil {
+		panic(fmt.Sprintf("Error creating test DB instance: %v", err))
+	}
+
+	db = gormDB
 }

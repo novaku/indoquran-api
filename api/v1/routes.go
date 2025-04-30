@@ -9,12 +9,16 @@ import (
 	"time"
 
 	"indoquran-api/internal/controllers"
+	"indoquran-api/internal/services/detail"
+	"indoquran-api/pkg/cache"
+	"indoquran-api/pkg/database"
 	"indoquran-api/pkg/logger"
 	"indoquran-api/pkg/middleware"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
+	"go.uber.org/zap"
 )
 
 type (
@@ -35,21 +39,48 @@ func NewServer(g *gin.Engine) IServer {
 
 // RunRouter starts the router
 func (s *Server) RunRouter() {
-	// rate limiting
-	f := viper.GetString("RATE_LIMIT_FILE")
-	rateLimitConfig, err := middleware.LoadConfig(f)
+	// Initialize logger
+	zapLogger, err := zap.NewProduction()
 	if err != nil {
-		logger.WriteLog(logger.LogLevelFatal, "Failed to load rate limit config: %#v", err)
+		logger.WriteLog(logger.LogLevelFatal, "Failed to initialize logger: %#v", err)
 	}
+	defer zapLogger.Sync()
 
 	g := s.g
 
-	g.Use(cors.Default()) // Default() Enable CORS for allows all origins
-	g.Use(middleware.LoggingMiddleware())
+	// Initialize database and Redis
+	db := database.GetDB()
+	redisClient := cache.GetRedis()
 
-	g.Use(middleware.NewRateLimiter(rateLimitConfig).RateLimitMiddleware())
+	// Initialize services
+	detailService := detail.NewDetailService(detail.NewRedisCacheService(), detail.NewGormDatabaseService())
+
+	// Setup middleware
+	g.Use(cors.Default()) // Default() Enable CORS for allows all origins
+	g.Use(middleware.LoggingMiddleware(db, zapLogger))
 	g.Use(middleware.TimeoutMiddleware(time.Minute))
 	g.Use(middleware.ContentSecurityPolicy())
+
+	// Setup rate limiting
+	rateLimiter := middleware.NewRateLimiter(redisClient, map[string]middleware.RateLimit{
+		"/api/v1/search": {
+			Requests: 10,
+			Period:   time.Second,
+		},
+		"/api/v1/surat": {
+			Requests: 10,
+			Period:   time.Second,
+		},
+		"/api/v1/surat/*": {
+			Requests: 10,
+			Period:   time.Second,
+		},
+		"/api/v1/ayat/*": {
+			Requests: 10,
+			Period:   time.Second,
+		},
+	})
+	g.Use(middleware.RateLimitMiddleware(rateLimiter))
 
 	// Endpoint CSP report handler
 	g.POST("/csp-report", middleware.CspReportHandler)
@@ -64,7 +95,9 @@ func (s *Server) RunRouter() {
 		v1.GET("/search", controllers.SearchHandler)
 		v1.GET("/surat", controllers.ListSurat)
 		v1.GET("/surat/:id", controllers.ListAyatInSurat)
-		v1.GET("/ayat/:id", controllers.DetailAyat)
+		v1.GET("/ayat/:id", func(c *gin.Context) {
+			controllers.DetailAyat(c, detailService)
+		})
 	}
 
 	port := ":" + viper.GetString("API_PORT")
@@ -92,6 +125,7 @@ func gracefulShutdown(srv *http.Server) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+
 	if err := srv.Shutdown(ctx); err != nil {
 		logger.WriteLog(logger.LogLevelFatal, "Server forced to shutdown: %s", err)
 	}

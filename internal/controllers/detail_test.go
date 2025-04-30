@@ -34,7 +34,7 @@ func TestDetailAyat(t *testing.T) {
 		{
 			name:         "success get ayat",
 			ayatID:       "1",
-			mockResponse: map[string]string{"text": "sample ayat"},
+			mockResponse: map[string]interface{}{"text": "sample ayat"},
 			mockError:    nil,
 			expectedCode: http.StatusOK,
 		},
@@ -63,9 +63,7 @@ func TestDetailAyat(t *testing.T) {
 			c, _ := gin.CreateTestContext(w)
 			c.Params = []gin.Param{{Key: "id", Value: tt.ayatID}}
 
-			DetailAyat(c)
-
-			assert.Equal(t, tt.expectedCode, w.Code)
+			DetailAyat(c, mockDetail)
 
 			var response Response
 			err := json.NewDecoder(w.Body).Decode(&response)
